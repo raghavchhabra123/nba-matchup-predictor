@@ -1,0 +1,37 @@
+{
+  "metrics_holdout_2024_2026": {
+    "Logistic Regression": {
+      "accuracy": 0.66,
+      "roc_auc": 0.7118,
+      "brier": 0.2157
+    },
+    "XGBoost": {
+      "accuracy": 0.6503,
+      "roc_auc": 0.7083,
+      "brier": 0.216
+    }
+  },
+  "test_seasons": [
+    2024,
+    2025
+  ],
+  "n_games_total": 30905,
+  "league_home_win_rate_since_2015": 0.5646,
+  "features": [
+    "H_win_rate_last10",
+    "A_win_rate_last10",
+    "diff_win_rate_last10",
+    "H_win_rate_season",
+    "A_win_rate_season",
+    "diff_win_rate_season",
+    "H_rest_days",
+    "A_rest_days",
+    "diff_rest_days",
+    "H_home_rate_last10",
+    "A_home_rate_last10",
+    "diff_home_rate_last10",
+    "H_rank_W_PCT_pre",
+    "A_rank_W_PCT_pre",
+    "diff_rank_W_PCT_pre"
+  ]
+}

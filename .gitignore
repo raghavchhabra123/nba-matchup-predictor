@@ -1,0 +1,16 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# Streamlit local runtime data (regenerated live; don't commit)
+data/live/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
+*.swp
