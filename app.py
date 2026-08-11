@@ -5,6 +5,7 @@ rest, and player availability as point adjustments before converting once to a
 win probability. Run:  streamlit run app.py
 """
 import json
+import os
 import re
 from pathlib import Path
 
@@ -12,6 +13,7 @@ import numpy as np
 import pandas as pd
 import streamlit as st
 
+from src.chat import ask as chat_ask
 from src.engine import SpreadEngine
 from src.injuries import by_team, load_injuries, norm_name
 from src.lineups import home_player_points, team_delta
@@ -46,11 +48,24 @@ label p {font-size:1rem !important; font-weight:600 !important;}
 .teamstrip .tsub {color:#aeb8c6; font-size:.95rem; font-weight:600;}
 .hero {background:linear-gradient(180deg,#171d27,#12161e); border:1px solid #2a3342;
        border-radius:22px; padding:30px 34px; box-shadow:0 8px 30px rgba(0,0,0,.25);}
-.pctrow {display:flex; justify-content:space-between; align-items:center;}
-.heroteam {display:flex; align-items:center; gap:14px;}
-.heroteam img {width:58px; height:58px; object-fit:contain;}
-.pct {font-size:4.2rem; font-weight:800; line-height:.95; letter-spacing:-1px;}
-.plabel {font-size:1rem; color:#93a0b4; font-weight:600;}
+.pctrow {display:flex; justify-content:space-between; align-items:center; gap:10px;}
+.heroteam {display:flex; align-items:center; gap:14px; min-width:0;}
+.heroteam img {width:52px; height:52px; object-fit:contain; flex-shrink:0;}
+.heromid {text-align:center; margin:14px 0 4px;}
+.pct {font-size:3.8rem; font-weight:800; line-height:.95; letter-spacing:-1px;}
+.plabel {font-size:.95rem; color:#93a0b4; font-weight:600;}
+/* --- mobile: shrink so nothing overlaps on a phone --- */
+@media (max-width:640px){
+  .hero {padding:18px 16px; border-radius:16px;}
+  .pct {font-size:2.4rem;}
+  .heroteam {gap:8px;}
+  .heroteam img {width:34px; height:34px;}
+  .plabel {font-size:.72rem;}
+  .verdict {font-size:1.05rem;}
+  .spreadpill {font-size:.95rem; padding:5px 14px;}
+  .teamstrip img {width:26px; height:26px;}
+  .teamstrip .tsub {font-size:.8rem;}
+}
 .probbar {height:34px; border-radius:17px; overflow:hidden; display:flex; margin:20px 0 10px;
           box-shadow:inset 0 0 0 1px rgba(255,255,255,.05);}
 .verdict {font-size:1.35rem; font-weight:700; margin-top:8px; color:#eef2f7;}
@@ -333,21 +348,21 @@ def hero_logo(abbr):
 
 
 mid = (f'<span class="spreadpill">{res["spread_str"]}</span>'
-       f'<div class="plabel" style="margin-top:8px">expected margin {res["margin"]:+.1f}</div>'
-       ) if level >= 1 else '<div class="plabel" style="padding-top:1.4rem">win probability</div>'
+       f'<span class="plabel" style="margin-left:10px">exp. margin {res["margin"]:+.1f}</span>'
+       ) if level >= 1 else '<span class="plabel">win probability</span>'
 st.markdown(f"""
 <div class="hero">
   <div class="pctrow">
     <div class="heroteam">{hero_logo(home_team)}
-      <div><div class="plabel">🏠 {abbr2name.get(home_team)}</div>
+      <div><div class="plabel">🏠 {home_team}</div>
         <div class="pct" style="color:{HOME_C}">{hp:.0%}</div></div>
     </div>
-    <div style="text-align:center">{mid}</div>
     <div class="heroteam" style="flex-direction:row-reverse">{hero_logo(away_team)}
-      <div style="text-align:right"><div class="plabel">{abbr2name.get(away_team)} ✈️</div>
+      <div style="text-align:right"><div class="plabel">{away_team} ✈️</div>
         <div class="pct" style="color:{AWAY_C}">{ap:.0%}</div></div>
     </div>
   </div>
+  <div class="heromid">{mid}</div>
   <div class="probbar">
     <div style="width:{hp*100:.1f}%; background:{HOME_C}"></div>
     <div style="width:{ap*100:.1f}%; background:{AWAY_C}"></div>
@@ -367,6 +382,17 @@ st.markdown(
     f"<div class='takecard'><div class='takelbl'>📝 The take</div>"
     f"<div class='taketxt'>{take_html}</div></div>",
     unsafe_allow_html=True)
+
+# facts injected into the chatbot so it answers from real numbers only
+HN, AN = abbr2name.get(home_team), abbr2name.get(away_team)
+_facts = f"""Season: 2026-27 (projected rosters after the 2026 offseason).
+Matchup: {HN} at home vs {AN} away.
+{HN} projected power: {eng.team_strength(home_team):+.1f} pts vs an average team.
+{AN} projected power: {eng.team_strength(away_team):+.1f} pts.
+Prediction: {HN} win probability {p:.0%}, {AN} {1-p:.0%}. Model line {res['spread_str']}, expected margin {res['margin']:+.1f} for the home team.
+Point breakdown (+ favors {HN}): team strength {comp['power']:+.1f}, home court {comp['home_court']:+.1f}, rest {comp['rest']:+.1f}, players sitting {comp['players']:+.1f}, travel/altitude {comp.get('travel', 0):+.1f}.
+Sitting out: {', '.join(n for n, _ in out_home) or 'nobody'} for {HN}; {', '.join(n for n, _ in out_away) or 'nobody'} for {AN}.
+How the model works: win probability = normal CDF of (expected margin / {eng.sigma:.1f}). Home court is worth +{eng.hca:.1f} pts. A back-to-back costs ~2 pts. Team strength is {eng.b_elo*100:.1f} pts per 100 Elo. Denver and Utah get an altitude bonus (+2.2 / +1.2). Player value = BPM (points per 100 possessions above average); a star is worth ~4-6 pts and their minutes redistribute to the bench, so depth matters. 2026-27 team ratings blend current-roster BPM with regressed Elo. On a 2024-26 holdout the engine hit 68% accuracy, matching the Vegas/FiveThirtyEight ceiling. Plain summary: {re.sub(r'[*]', '', take)}"""
 
 # ------------------------------------------------------------------ tabs
 def roster_ui(col, abbr, key, out_list, lvl):
@@ -441,8 +467,9 @@ def render_quality():
         k1, k2, k3 = st.columns(3)
         k1.metric('Accuracy', f"{best.get('accuracy', 0):.1%}",
                   help='Share of games where the favorite won.')
-        k2.metric('Beats guessing', '55% → 68%',
-                  help='A naive “home team always wins” gets 54.9%. The engine gets 68.2%.')
+        k2.metric('Always-home → us', '55% → 68%',
+                  help='Simplest baseline — always pick the home team — already wins ~55% '
+                       'because of home-court advantage (not 50%). Our engine reaches 68%.')
         k3.metric('Calibration', 'On target',
                   help='When it says 65%, home teams really win ~63%.')
         st.caption('~68% is the realistic ceiling — Vegas and FiveThirtyEight land there '
@@ -484,6 +511,39 @@ def render_quality():
             st.caption('538-style Elo over 30,905 games, 2003-2026. For analysis, not betting.')
 
 
+def render_ask(facts):
+    key = ''
+    try:
+        key = st.secrets.get('GROQ_API_KEY', '')
+    except Exception:
+        key = os.environ.get('GROQ_API_KEY', '')
+    if not key:
+        st.info('💬 **Assistant not enabled.** Add a free Groq API key to chat about '
+                'this matchup (why a team’s favored, what a factor means, what-ifs).')
+        st.caption('Get a free key at console.groq.com → add it as `GROQ_API_KEY` in '
+                   '`.streamlit/secrets.toml` (local) or the app’s Secrets (Streamlit Cloud).')
+        return
+    st.caption('Ask about this matchup — grounded on the model’s real numbers.')
+    for m in st.session_state.get('chat', []):
+        st.chat_message(m['role']).write(m['content'])
+    with st.form('askform', clear_on_submit=True):
+        q = st.text_input('Your question', placeholder='Why is the home team favored?',
+                          label_visibility='collapsed')
+        sent = st.form_submit_button('Ask')
+    if sent and q:
+        hist = st.session_state.get('chat', [])
+        pairs = [(hist[i]['content'], hist[i + 1]['content'])
+                 for i in range(0, len(hist) - 1, 2)]
+        try:
+            with st.spinner('Thinking…'):
+                ans = chat_ask(q, facts, pairs, key)
+        except Exception as e:
+            ans = f'(Assistant error: {type(e).__name__}. Check your GROQ_API_KEY.)'
+        st.session_state.chat = hist + [{'role': 'user', 'content': q},
+                                        {'role': 'assistant', 'content': ans}]
+        st.rerun()
+
+
 if level == 0:
     outs = [n for n, _ in out_home] + [n for n, _ in out_away]
     if outs:
@@ -494,11 +554,16 @@ else:
     labels = ['🔑 Keys to the matchup', '🧍 Players']
     if level >= 2:
         labels.append('✅ How good is it')
+    labels.append('💬 Ask')
     _tabs = st.tabs(labels)
     with _tabs[0]:
         render_why()
     with _tabs[1]:
         render_players(level)
+    ask_idx = 2
     if level >= 2:
         with _tabs[2]:
             render_quality()
+        ask_idx = 3
+    with _tabs[ask_idx]:
+        render_ask(_facts)

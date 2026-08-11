@@ -9,6 +9,9 @@ env/
 # Streamlit local runtime data (regenerated live; don't commit)
 data/live/
 
+# Secrets — NEVER commit your API keys
+.streamlit/secrets.toml
+
 # OS / editor
 .DS_Store
 .idea/
