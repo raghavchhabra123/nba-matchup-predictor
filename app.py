@@ -73,6 +73,14 @@ label p {font-size:1rem !important; font-weight:600 !important;}
 .spreadpill {display:inline-block; background:#e8590c; color:#fff;
              border-radius:22px; padding:7px 18px; font-weight:700; font-size:1.05rem;
              box-shadow:0 2px 10px rgba(232,89,12,.35);}
+.upsetbadge {display:inline-block; background:#3a2a12; border:1px solid #e8850c;
+             color:#ffb454; border-radius:20px; padding:3px 12px; font-weight:700;
+             font-size:.85rem; margin-bottom:6px;}
+.starrow {display:flex; align-items:center; justify-content:center; gap:10px;
+          margin:12px 0 2px; color:#c9d1dc; font-weight:600;}
+.starrow img {width:44px; height:44px; border-radius:50%; object-fit:cover;
+              background:#222a38; border:2px solid #2f3846;}
+.starrow .vs {color:#8b95a5; font-weight:700; margin:0 6px;}
 .takecard {background:#151a23; border:1px solid #262d3a; border-left:4px solid #e8590c;
            border-radius:14px; padding:18px 22px;}
 .takelbl {font-size:.82rem; color:#93a0b4; text-transform:uppercase;
@@ -353,9 +361,19 @@ def hero_logo(abbr):
     return f'<img src="{lg}">' if isinstance(lg, str) and lg.startswith('http') else ''
 
 
-mid = (f'<span class="spreadpill">{res["spread_str"]}</span>'
+def top_player(abbr):
+    r = players[players.team == abbr].sort_values('bpm', ascending=False)
+    if r.empty:
+        return None
+    row = r.iloc[0]
+    return row.athlete_display_name, str(row.get('headshot', '') or '')
+
+
+upset = ('<div class="upsetbadge">🔥 Coin-flip — upset watch</div>'
+         if abs(p - 0.5) <= 0.055 else '')
+mid = (f'{upset}<br><span class="spreadpill">{res["spread_str"]}</span>'
        f'<span class="plabel" style="margin-left:10px">exp. margin {res["margin"]:+.1f}</span>'
-       ) if level >= 1 else '<span class="plabel">win probability</span>'
+       ) if level >= 1 else f'{upset}<span class="plabel">win probability</span>'
 st.markdown(f"""
 <div class="hero">
   <div class="pctrow">
@@ -376,6 +394,16 @@ st.markdown(f"""
   <div class="verdict">{verdict_text(p, home_team, away_team)}</div>
 </div>
 """, unsafe_allow_html=True)
+
+# star matchup strip (top player each side)
+_hs, _as = top_player(home_team), top_player(away_team)
+if _hs and _as:
+    def _star(sp, color):
+        img = (f'<img src="{sp[1]}">' if sp[1].startswith('http') else '')
+        return f'{img}<span style="color:{color}">{sp[0]}</span>'
+    st.markdown(
+        f'<div class="starrow">{_star(_hs, HOME_C)}<span class="vs">vs</span>'
+        f'{_star(_as, AWAY_C)}</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------------ the take
 take = build_summary(res, home_team, away_team, lambda a: abbr2name.get(a, a),
@@ -532,11 +560,19 @@ def render_ask(facts):
     st.caption('Ask about this matchup — grounded on the model’s real numbers.')
     for m in st.session_state.get('chat', []):
         st.chat_message(m['role']).write(m['content'])
+    pills = ['Why is the home team favored?', 'How much is home court worth?',
+             'What if the away team was rested?', 'What is BPM?']
+    pcols = st.columns(2)
+    clicked = None
+    for i, pl in enumerate(pills):
+        if pcols[i % 2].button(pl, key=f'pill{i}', use_container_width=True):
+            clicked = pl
     with st.form('askform', clear_on_submit=True):
-        q = st.text_input('Your question', placeholder='Why is the home team favored?',
+        q = st.text_input('Your question', placeholder='Ask anything about this matchup…',
                           label_visibility='collapsed')
         sent = st.form_submit_button('Ask')
-    if sent and q:
+    q = clicked or (q if sent else '')
+    if q:
         hist = st.session_state.get('chat', [])
         pairs = [(hist[i]['content'], hist[i + 1]['content'])
                  for i in range(0, len(hist) - 1, 2)]
