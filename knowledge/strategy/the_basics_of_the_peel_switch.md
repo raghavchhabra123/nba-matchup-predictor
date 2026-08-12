@@ -1,0 +1,5 @@
+The Basics of the “Peel Switch”
+What is a Peel Switch?
+A “peel switch” can simply be defined as a defensive switch that occurs when the primary defender is beaten off the dribble. If the primary defender is beaten off the dribble, the nearest help defender would switch onto the ball handler, while the beaten defender “peels off” and switches onto the open player.
+The benefit of peel switching once beat off the dribble is the fact it essentially eliminates having “2 on the ball” (two defenders guarding the ball handler leaving an open player). In most traditional defenses, when the primary defender is beat off the dribble the nearest help defender rotates to help, resulting in having “2 on the ball” for a brief moment while the primary defender attempts to recover back in front of the ball. The “peel switch” was designed to minimize having 2 on the ball as much as possible, and keep everyone matched up.
+The real advantage is that, when done well, the “peel switching” defense can disrupt and take away the normal “penetrate and kick” or “PNR Reads” of the offense.

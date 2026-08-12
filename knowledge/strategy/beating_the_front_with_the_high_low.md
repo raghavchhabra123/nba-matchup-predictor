@@ -1,0 +1,8 @@
+Beating the Front with the High/Low
+Fronting the Post:
+Fronting the post is still something we see quite frequently throughout all levels of basketball. Typically you’ll see it at higher levels when a smaller defender gets switched onto a big and the offense is attempting to punish that mismatch. However, there are undersized teams at lower levels who have designed their entire defensive system around fronting the post as a way to compete with bigger, stronger teams.
+Fronting a post player requires help on the back side, otherwise the offense would be able to easily lob an entry pass over the top each time down the floor. This back side help typically comes from the lowest weak side defender. The back side help eliminates the lob entry, and at worst for the defense, a cross court skip pass is made and the help defender must recover back to his man as the ball is in the air.
+Therefor, if you’re a team that relies on interior scoring, knowing how to combat the front to still create high percentage scoring opportunities is a must.
+Beating the front with the high/low Pass:
+The simplest way to beat the front is by exploiting the back side help defender (typically the lowest weak side defender). If the player who’s defender is the back side help (lowest weak side offensive player) recognizes the front, he should flash to the high post to receive the pass.
+This pulls the back side help defender up to the ball, while the post player turns and seals the fronting defender on the top side. The player at the high post can then look to throw a high/low entry pass, as the back side help is now removed and guarding the ball.

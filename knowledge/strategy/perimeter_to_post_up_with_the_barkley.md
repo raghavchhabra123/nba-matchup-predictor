@@ -1,0 +1,4 @@
+Perimeter to Post Up with The “Barkley”
+The Basics of a Barkley:
+The “Barkley” as it has been coined, is a move used when a player’s dribble drive is cut off, and rather than bouncing their dribble out or kicking it, they flip their hips and turn the drive into a post up. This is a great concept to use with your power forward, or any perimeter players with good size and physicality.
+Named after former NBA great Charles Barkley if you hadn’t guessed already, the Barkley is a simple, yet effective way to take advantage of a size mismatch and gain advantageous position down low without the need for a traditional post up and entry. This move is used across all levels of competitive basketball, but perhaps the most famous player who routinely utilizes the Barkley with great success with Kawhi Leonard.

@@ -1,0 +1,13 @@
+Ball Screen Offense—Roll to Post
+Posting Up After a Roll:
+In today’s modern game, offenses are trending towards more and more ball screens within the half court. There are three main scoring options that we often associate with modern ball screen actions—the ball handler attacking the rim or pulling up, hitting the screener as he rolls to the rim and punishing the help defenders by kicking to shooters along the perimeter.
+However, one of the most overlooked, underused, yet effective concepts to create high percentage scoring opportunities in the pick and roll is the “roll to post” or “roast” as it has been coined by George Washington assistant coach, Zak Boisvert.
+Basics Of Posting Up after a Roll:
+The roll to post is just what it sounds like—the screener, usually a big, turns his roll to the rim into a post up if he does not receive an initial pass as he is rolling. This usually ends in a deep post touch one of two ways:
+1. The ball handler who enters the ball directly after using the ball screen.
+The first way to achieve a post entry following a ball screen is by the ball handler himself entering the ball directly into the screener after he has rolled and posted up. This usually occurs if the ball handler if the roller is not open initially, and the ball handler is unable to get downhill and picks up his dribble.
+After rolling to the rim, the screener can duck in to achieve strong positioning in the post. This is effective because the screener’s defender is worried about containing and defending the initial ball screen action. When the ball handler is cut off or picks up his dribble, the screener’s defender will naturally relax, allowing the screener to duck in and post up.
+2. The ball is thrown back along the perimeter and entered into the post.
+This is perhaps the most effective way to achieve a deep post seal after a ball screen, and usually involves the ball handler kicking the ball back to the perimeter player filling behind his drive—this is known as “shake” action.
+Throwing the ball back to perimeter player filling on the drive allows the screener to turn and seal his defender on his back side (since his defender was originally positioned to contain the ball screen).
+If you are a ball screen heavy team, think about adding a few small sided drills into your practice plans to introduce the roll to post concept. You’ll be amazed how easily deep post entries can achieved through your typical ball screen actions.

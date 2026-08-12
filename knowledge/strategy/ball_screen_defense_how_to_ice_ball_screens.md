@@ -1,0 +1,18 @@
+Ball Screen Defense—How to Ice Ball Screens
+What is ice coverage?
+Ice coverage is a pick and roll defensive coverage which emphasizes taking away middle penetration in an attempt to limit potential scoring options for the offense. To “ice” a ball screen simply means to send the ball handler towards the baseline away from the ball screen. Ice coverage is typically used against wing ball screen action, where the ball handler is attempting to use the screen to gain middle penetration.
+Ice Coverage Set Up:
+To ice a ball screen, the on-ball defender will force the ball handler baseline away from the ball screen by adjusting the angle of his feet to get on the high side of the ball handler.
+The screener’s defender would then position himself accordingly to be able to help on a potential baseline drive (the way the on-ball defender is forcing the ball handler). How far up or back the screener’s defender positions himself will be dictated by the team and offensive skill set of the players in the ball screen action. The screener’s defenders goal is to be in position to provide support on the baseline drive if needed, while not allowing the screener to get behind him on the roll.
+The Basics of Icing Ball Screens:
+The first step to successfully ice a ball screen is communication.
+The screener’s defender can see his man going to set a ball screen, so he needs to yell “Ice, Ice, Ice!” to let the on-ball defender know a ball screen is coming and to adjust the angle of his feet to force the ball baseline.
+The on-ball defender can then point which direction or where he is planning on forcing the ball handler, and this lets the screener’s defender know where to position himself to help.
+Off Ball Defenders:
+In addition to neutralizing the ball screen action itself, icing ball screens should theoretically be easier on the off-ball defenders not involved in the ball screen coverage compared to other coverages like hard hedging or switching.
+In those coverages, offenses are sometimes able to create a numbers advantage or exploit a mismatch leading to high percentage scoring opportunities for the offense. For example, in a hard hedging coverage, the screener’s defender is coached to come out to the perimeter, get parallel to the sideline, and help on the ball handler as he comes off the ball screen.
+This means an off-ball defender is forced to tag or help on the screener rolling to the rim. Savvy ball handlers are able to make the right read and punish the help every time. However, in ice coverage the off-ball defenders theoretically should not have to tag or help off on the roller as much leading to fewer advantages for the offense.
+In addition, ice coverage forces the ball baseline rather than middle, pinning or locking the offense on one side of the floor. This allows off-ball defenders to still help on the roll if needed, and recover in time as the only pass available is a cross-court skip. Compare this to a hard hedge coverage where the ball handler is still able to get to the middle of the floor—it’s harder for off-ball defenders to help and recover since the ball handler can make any pass at a shorter distance.
+No Middle When Icing ball screens:
+While the ice coverage neutralizes the ball screen in action in theory, it must be perfectly executed in order to actually be successful. The biggest key to running this coverage effective falls on the on-ball defender, and it is not allowing middle penetration.
+Ice coverage is not designed to handle middle penetration, as the screener’s defender is positioning himself to help along the baseline. Middle penetration can lead to an easy drive or score or it will force the entire defense to collapse, giving the ball handler multiple kick out opportunities.

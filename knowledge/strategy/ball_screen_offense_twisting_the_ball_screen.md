@@ -1,0 +1,10 @@
+Ball Screen Offense—Twisting The Ball Screen
+What Does it Mean to Twist a ball SCreen?
+“Twisting” the ball screen is another concept that originated and was heavily used in international basketball, before being adopted by the NBA and filtering throughout all levels. The “twist” action involves the ball screen being set, then quickly re-set, and is typically triggered when there is no advantage created from the initial ball screen action.
+When Should You twist a ball screen?
+The most common scenario when you would want to twist a ball screen, is when the on-ball defender slides underneath the initial ball screen and is able to recover to the ball handler, thus neutralizing any advantage. If the on-ball defender slides under the initial screen, the screener would simply turn and re-set another ball screen on the opposite side.
+In addition to twisting the under, you can also twist and re-screen any time the initial screen does not create an advantage. For example, if the on-ball defender is able to jam the ball handler and get through the screen, the screener can simply twist and re-screen.
+Why does twisting a ball screen work?
+The twist action allows the ball screen to be set lower or closer to the rim, and creates a better angle for the ball handler to attack. At the same time, it makes it extremely difficult for the on-ball defender to slide under the screen for a second time, thus forcing him to go over the re-screen. With the defender now forced over the screen, ball handler should be able to turn the corner to attack the basket or engage the screener’s defender to create a 2v1 advantage.
+Twisting Dribble Handoffs:
+Another action where the twist action is commonly used is a dribble handoff or get, especially when it is a big-to-small handoff. If the defender guarding the player who is going to receive the handoff slides underneath the handoff, the player who pitched the ball can simply twist by turning and re-screening.

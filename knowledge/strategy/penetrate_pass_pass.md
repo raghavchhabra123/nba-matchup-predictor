@@ -1,0 +1,15 @@
+Why You Should Make the Extra Pass
+What is the Penetrate, pass, pass concept?
+The “penetrate, pass, pass” concept is a must-add if your offensive system relies on the dribble drive to create scoring opportunities. This concept essentially refers to making the “extra pass” after an initial drive & kick out.
+Watch any high-level basketball game and you’ll notice the penetrate, pass, pass scenario happens constantly throughout the game, and often leads to an incredibly high percentage shot.
+Why Should You Pass Twice after penetration?
+1. Re-Opens the Lane
+If the defense collapses and helps on the initial dribble drive or penetration, and the ball handler is forced to kick it out, the player receiving the kick out will have the tendency to want to drive and attack the initial closeout. However, this isn’t always the best option since the defense has just collapsed to stop the initial drive. Re-driving immediately will hardly ever lead to a high percentage shot since multiple defenders are already positioned to stop that drive.
+Rather, the player receiving the kick out should look to shoot first on the catch. If the player cannot shoot right away on the catch, he should look to make the “extra pass.” This extra pass provides a brief second for the collapsed defenders to recover out to their man, thus re-opening the lane for another drive.
+2. Keeps the Defense in Rotation
+In addition to re-opening the lane, the extra pass keeps the defense in rotation by forcing a 2nd closeout from the defense. It is much easier for the offense to attack the 2nd closeout from the defense when it is in scramble mode, rather than attacking the initial closeout when the defense is already positioned to help on the attack.
+3. Forces Long Closeouts
+The defense will most likely be able to handle closing out and recovering on the initial drive and kick (most teams work on this rotation daily). However, most defenses will struggle to closeout and recover a 2nd time. This is because the extra pass forces a longer closeout than the initial drive and kick. This long closeout, along with the lane re-opening, allows for easy driving opportunities for the offense.
+How to Implement this in your offense?
+The first key to implementing this concept within your offense is the decision making process. Players should be taught to drive to score. If help arrives, look to pass. Players receiving the pass look to shoot right away on the catch. If you cannot shoot right away on the catch, make an extra pass.
+The 2nd key to implementing the penetrate, pass, pass concept is to rep it in practice whether it is through small-sided games or adding it as a constraint in your half court session (i.e. two penetrate, pass, pass sequences before a shot). Below are a few of my favorite small-sided games to rep the penetrate, pass, pass concept and dribble drive decision making.

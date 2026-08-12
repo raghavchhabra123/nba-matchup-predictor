@@ -1,0 +1,20 @@
+5 Post Moves to Master
+1. Drop Step:
+The drop step is the #1 post move all players, regardless of position, should master and add to their bag.
+The drop step is essentially a reverse pivot with either your inside or outside foot, depending on if you are drop stepping middle or baseline, in an effort to seal your defender and allow you to finish at the rim. In order to be effective with this move, your drop step must be quick but more importantly it must cover distance and allow you to gain ground.
+Depending on how the defender is playing, you can either drop step to the middle or to the baseline. Drop stepping baseline is the most common considering most defenses will play three quarter denial from the top side in an effort to take away the middle. If you have your defender sealed on the high side, you can drop step right away on the catch. If your defender is playing behind you on the catch, your best bet is to set them up by taking 1-2 dribbles middle before drop stepping baseline.
+2. Jump Hook:
+Like the drop step, all players regardless of position should master the jump hook as it is a great finishing option in the paint for both guards and bigs. The jump hook is effective because it allows you to shield your defender from the ball as you elevate, making it that much harder for them to contest.
+You can shoot a jump hook over either shoulder, but personally I like my players to turn middle for jump hooks rather than baseline. Statistically, the jump hook when turning middle is a higher percentage shot than when turning baseline, and it also allows for better offensive rebounding opportunities.
+To shoot a jump hook, turn your body so your shoulders create a direct line to the rim, elevate and release the ball at your highest point with your outside hand over your outside shoulder, and finish it like any other jumper (flick the wrist, off the fingertips, etc.).
+3. Up & Under:
+If you can develop a consistent jump hook, defenders will begin leaving their feet in an effort to better contest it. When they do, the up & under is the perfect move to counter their over contest.
+To do an up & under, you’ll turn your body so your shoulders create a direct line to the rim, similar to a jump hook. However, you’ll fake the jump hook, causing your defender to leave his feet, and step through to the rim with your outside foot (foot furthest from the rim) for an easy finish with your outside hand.
+4. Quick Spin:
+The quick spin is another great post move that should be mastered by all decent bigs. Like it’s name suggests, this move is a quick spin off of the defender that often results in an easy finish.
+However, this isn’t a move that can be done every time down the floor. Rather, it should be used when you can feel the defender putting his weight on you (specifically into your back with an arm bar) in an effort to maintain position. With so much of their weight and force being directed into the offensive player’s backside, the defender is easily thrown off balance when their contact point is taken away via the quick spin.
+This move can be done immediately on the catch, or you can be patient on the catch and allow your defender to close the gap and re-initiate contact before quickly spinning—there’s no wrong way to do it.
+5. Face Up:
+As a big, it’s critical that you are able to score consistently with your back to the basket from the low block. But what if you get pushed off the low block or have a skill advantage over your defender? Being able to face up into a mid-ranger jumper or move off the dribble is equally as important.
+To face up, simply forward or reverse pivot on the catch so you are facing the rim. From here you have a variety of options—if given space you can rise up for a 12 foot jumper, if you’re quicker than your defender you can jab & attack, get to your spot for a jump hook, etc.
+Facing up is also a great option if teams begin doubling the big on the catch. Facing up allows the big to be able to see the double coming easier than he would with his back to the basket, and make the correct read.

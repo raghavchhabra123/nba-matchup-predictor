@@ -1,0 +1,19 @@
+Advanced Finishes in Traffic
+Finishing in Traffic:
+Yes, 2-feet finishes off a jump stop are a coach’s dream and result in the highest percentage of made lay-ups in traffic, look no further than Villanova. Add in a pump fake, and you’re all but guaranteed an easy bucket or trip to the line. But a jump stop isn’t always the best option, and more often than not, it’s not possible in heavy traffic. Defenders today are taller, longer and quicker than they’ve ever been, making finishing inside with consistency that much harder.
+This is why it is important to coach and drill different finishing options that change direction, create space, and disrupt the defender’s timing. While Mr. Fundamental may disagree with this list, these advanced finishes are common-use in the today’s game and a great option for finishing in traffic.
+Pro Hop:
+The pro hop, or avoid hop, is a must-have for perimeter player and is widely considered a fundamental of finishing at the rim. It is a great option to split defenders, escape oncoming help defenders, and avoid a potential offensive foul. To me, it is the best way to navigate to space in traffic.
+The key to an effective pro hop is to change direction and get somewhere with the hop—the goal is to put as much space as possible between you and a possible contest. Once the footwork is mastered and consistent, you can work on different types of gathers into the pro hop (high gather, low gather, tuck gather, etc.).
+Floater:
+The floater is a great finishing option to negate a taller shot blocker or contest, especially for undersized guards. There are a number of different floaters—1-foot floaters, 2-feet floaters, euro floaters, etc. The 2-feet floater allows for maximum control, and will often lead to a higher percentage of makes compared to others.
+The keys to a consistent floater are immediately exploding upwards (not out) on your jump stop or plant, balance, and a high release. A consistent floater is a must for guards playing at high level, and has to be repped like any other shot.
+Bump:
+The bump finish can be a great finish in traffic, especially for undersized guards. The goal is to create contact (bump) with the defender before he is able to leave his feet and contest. The subtle bump will be enough to throw off the defender’s timing and balance, preventing him from effectively contesting.
+Great body control is necessary in order to finish consistently with this one. You must be able to stay balanced through the bump in order to still finish afterwards. For smaller guards, the bump may not be enough to escape a contest from a much longer defender. Often times you’ll see guards bump a bigger defender before extending or fading away into a floater.
+Inside Hand:
+The inside hand finish is a great finishing option to quickly get the ball to the rim against a pursuing shot blocker. This finish works simply because it is different than what the defender is expecting.
+Shot blockers are reliant on timing and ball position, or knowing where the ball will be exposed by the offensive player. Finishing with the inside hand, as opposed to a traditional outside hand finish, disrupts the timing of the shot blocker and utilizes an unexpected ball position.
+Off Foot:
+The off foot finish, similar to the inside hand finish, is effective because it disrupts the shot blockers timing. Shot blockers subconsciously expect attacking players to explode off their inside leg, as one would with a traditional lay-up.
+Exploding a step earlier than expected off your outside leg while extending the ball out allows the guard to beat any possible contest. The best part about the off foot finish is that you do not need to be overly athletic to effectively use. The key is exploding and extending as soon as you plant your outside foot with no wasted movement.

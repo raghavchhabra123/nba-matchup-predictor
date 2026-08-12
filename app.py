@@ -16,6 +16,7 @@ import streamlit as st
 from src.chat import ask as chat_ask
 from src.engine import SpreadEngine
 from src.injuries import by_team, load_injuries, norm_name
+from src.knowledge import load_kb
 from src.lineups import home_player_points, team_delta
 from src.summary import build_summary
 from src.travel import compute_travel
@@ -97,6 +98,11 @@ label p {font-size:1rem !important; font-weight:600 !important;}
 @st.cache_resource
 def load_engine():
     return SpreadEngine()
+
+
+@st.cache_resource
+def get_kb():
+    return load_kb()
 
 
 @st.cache_data
@@ -534,9 +540,18 @@ def render_ask(facts):
         hist = st.session_state.get('chat', [])
         pairs = [(hist[i]['content'], hist[i + 1]['content'])
                  for i in range(0, len(hist) - 1, 2)]
+        ctx = facts
+        kb = get_kb()
+        if kb is not None:
+            hits = kb.retrieve(q, k=3)
+            if hits:
+                ctx += ('\n\nKNOWLEDGE (basketball concepts/strategy — use for '
+                        'concept questions and cite the source name):\n')
+                for title, cat, text, _ in hits:
+                    ctx += f'[{title}] {text[:700]}\n'
         try:
             with st.spinner('Thinking…'):
-                ans = chat_ask(q, facts, pairs, key)
+                ans = chat_ask(q, ctx, pairs, key)
         except Exception as e:
             ans = f'(Assistant error: {type(e).__name__}. Check your GROQ_API_KEY.)'
         st.session_state.chat = hist + [{'role': 'user', 'content': q},

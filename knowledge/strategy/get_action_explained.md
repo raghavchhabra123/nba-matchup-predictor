@@ -1,0 +1,8 @@
+The Popular “Get” Action Explained
+WHat is “Get'“ Action?
+“Get” action, as it is becoming popularly known as, is a simple 2-man action where a player passes the ball to another player (typically a big) and sprints to follow his pass and receive a handoff. You may also hear this referred to as a “chase” or “throw and go.” This concept is becoming a favorite at the professional and college ranks as a quick trigger to create early offense. We are even seeing this action trickle down into lower levels due to its simplicity and effectiveness.
+The action and reads created are similar to that of a ball screen. Depending on if the primary defender goes over or under the handoff, the ball handler has a variety of reads and options.
+Making the Reads:
+If the defender chasing the player sprinting into the “get” (1) trails him over the top of the hand off, he can look to turn the corner and get downhill as the player who made the hand off (5) rolls to the rim.
+If 1’s defender goes underneath the hand off, 1 can look to pull the trigger upon receiving the handoff if he is a solid shooter. If not, 5 can turn after handing the ball off and “twist” or re-screen for 1 on the opposite side to force his defender over.
+If the defense attempts to blitz or blow up the handoff, the player who received the initial pass can “keep” the ball instead of handing it off and look to get downhill. A simple read for the player who is supposed to make the handoff is if he cannot see his defender over his inside shoulder, his defender is overplaying and he should look to “keep” the ball and get downhill.
