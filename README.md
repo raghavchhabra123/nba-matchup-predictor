@@ -2,6 +2,10 @@
 
 An interactive **NBA win-probability and what-if dashboard** built with Python and Streamlit. Compare two teams and inspect how team strength, home court, rest, and player availability affect an estimated scoring margin.
 
+[Open the live dashboard](https://nba-matchup-predictor.streamlit.app/)
+
+The deployed demo currently includes projected 2026–27 rosters and travel/altitude adjustments. Those scenario features are separate from the historical base-engine evaluation below; the 68.2% figure should not be interpreted as validation of every deployed feature.
+
 ## The analytical question
 
 How can a matchup prediction be both useful and understandable? This project models an expected margin in points, then converts it to a win probability. The dashboard exposes the components rather than presenting an unexplained score.
