@@ -1,116 +1,80 @@
-# 🏀 NBA Matchup Win-Probability Dashboard
+# NBA Matchup Predictor
 
-A transparent, calibrated **what-if engine** for NBA matchups. Pick any two
-teams, toggle home court, rest, and player availability, and see the projected
-win probability — with a full breakdown of *why* it is what it is, every effect
-measured in points.
+An interactive **NBA win-probability and what-if dashboard** built with Python and Streamlit. Compare two teams and inspect how team strength, home court, rest, and player availability affect an estimated scoring margin.
 
-Built on (and a major upgrade to) the
-[NBA_HomeCourt_Advantage](https://github.com/raghavchhabra123/NBA_HomeCourt_Advantage)
-pipeline. See `ELEVATION_PLAN.md` for the researched mission and full roadmap.
+## The analytical question
 
-## Run it
+How can a matchup prediction be both useful and understandable? This project models an expected margin in points, then converts it to a win probability. The dashboard exposes the components rather than presenting an unexplained score.
+
+## Recorded results
+
+The checked-in [evaluation artifact](models/metrics_tier1.json) reports the following results for **2,462 games in the 2024–25 and 2025–26 seasons**:
+
+| Model | Accuracy | Log loss ↓ | Brier score ↓ |
+|---|---:|---:|---:|
+| Spread engine: Elo + home court + rest | **68.2%** | **0.6044** | **0.2086** |
+| Elo only | 67.83% | 0.6062 | 0.2092 |
+| Earlier win-rate classifier | 66.0% | 0.6193 | 0.2153 |
+| Constant home-win baseline* | 54.91% | 0.6888 | 0.2478 |
+
+These are **saved experiment results**, not a guarantee of future performance. The player-availability extension is not included in this evaluation.
+
+*The evaluation script estimates the constant baseline's probability using seasons from 2015 onward, including the holdout period. Its probability scores are therefore a descriptive comparison, not a strictly training-only benchmark.*
+
+## Method
+
+1. Build sequential Elo ratings from historical games.
+2. Fit a margin model using the Elo difference, home court, and back-to-back indicators.
+3. Convert the expected margin into a probability using a normal cumulative distribution function.
+4. Evaluate accuracy, log loss, Brier score, and reliability bins on later seasons.
+
+The build script uses seasons through 2023 for model fitting; its home-court/rest refit uses 2016–2023. Sequential Elo updates use completed games, while the dashboard's final ratings incorporate the available history.
+
+Rounded fitted effects include a **2.47-point home advantage**, **3.7 points per 100 Elo**, a **−1.78-point home back-to-back effect**, and a **+2.07-point away back-to-back effect** on home margin. The residual scale is approximately **12.51 points**.
+
+See [model building](scripts/build_ratings.py) and [evaluation](scripts/evaluate.py) for the implementation.
+
+## Player-availability scenarios
+
+The dashboard also estimates lineup changes using BPM-based player values and redistributed minutes. This is an exploratory scenario layer, not a separately validated injury-prediction model. Its assumptions should not be confused with observed causal player effects or the holdout results above.
+
+## Run locally
 
 ```bash
 pip install -r requirements.txt
-python -m scripts.build_ratings   # build Elo + point-spread engine (once)
-python -m scripts.evaluate        # holdout metrics + calibration (optional)
+python -m scripts.build_ratings
+python -m scripts.evaluate
 streamlit run app.py
 ```
 
-(The repo ships with the engine already built, so you can skip straight to
-`streamlit run app.py`.)
+A fitted engine is included, so rebuilding can be skipped when exploring the existing dashboard. Re-run the scripts to reproduce or audit the saved evaluation in your environment.
 
-## How it works — the point-spread backbone
+## Data and structure
 
-Instead of feeding a black-box classifier, the engine predicts an **expected
-margin in points**, then converts to a win probability once at the end:
+The repository's historical dataset contains 30,905 games spanning 2003–04 through 2025–26. The project combines the earlier Kaggle-based history with later hoopR/ESPN mirrors.
 
-```
-expected_margin = 0.037 · (Elo_home − Elo_away)   # neutral power-rating gap
-                + 2.5   if home court is ON        # fitted home-court advantage
-                − 1.8   if home is on a back-to-back
-                + player_points                    # from availability toggles
-P(home win)     = Φ(expected_margin / 12.5)        # normal CDF, σ from the data
-```
+| File or directory | Purpose |
+|---|---|
+| `app.py` | Streamlit interface and model breakdown |
+| `src/elo.py` | Sequential team-strength ratings |
+| `src/engine.py` | Margin-to-probability engine |
+| `src/ratings.py` | Rest indicators and model specification |
+| `src/lineups.py` | Player-availability scenario logic |
+| `scripts/build_ratings.py` | Fit and export the engine |
+| `scripts/evaluate.py` | Evaluate predictions and calibration |
+| `models/engine.json` | Saved model parameters and ratings |
+| `models/metrics_tier1.json` | Saved metrics and reliability bins |
+| `data/games_history.csv` | Historical game data |
 
-Because home court, rest, and injuries all live in the **same unit (points)**,
-they simply add up — the way Vegas and FiveThirtyEight build a number. The
-dashboard shows the full waterfall (power ± home ± rest ± players → margin).
+The sidebar's live refresh updates player data through `nba_api`; it does not automatically retrain the Elo engine.
 
-Every coefficient was **fitted from 30,905 games and matches published NBA
-research**:
+## Limitations and next steps
 
-| Effect | This model | Real-world benchmark |
-|---|---|---|
-| Home-court advantage | **+2.5 pts** | ~2.0–3.0 pts; betting closing line ≈ 2.05 |
-| Back-to-back penalty | **−1.8 pts** | ~−2 pts; B2B teams win ~43.6% vs 51.8% rested |
-| Elo → points | **3.7 pts / 100 Elo** | 538 ≈ 3.6 pts / 100 Elo |
-| Margin noise (σ) | **12.5 pts** | SD of NBA margin ≈ 11–12 pts |
+- Accuracy alone does not establish calibration; inspect reliability bins and probability losses.
+- Player scenarios need separate historical validation.
+- A cleaner benchmark would fit the constant baseline on training data only.
+- Rolling-origin evaluation and uncertainty intervals would strengthen the results.
+- Data-source changes, roster changes, and future seasons may shift performance.
+- Results here belong to this pipeline. The [earlier exploratory notebook](https://github.com/raghavchhabra123/NBA_HomeCourt_Advantage) uses a different approach and should not be treated as the same experiment.
 
-## Power ratings (Elo)
-
-Neutral team strength via FiveThirtyEight-style Elo: a margin-of-victory
-multiplier with the autocorrelation correction (blowouts help but don't
-runaway-inflate top teams), home court applied only at prediction time, and 75%
-season-to-season carryover with mean reversion. Rebuilt over all 30,905 games.
-
-## Player availability (Tier 2)
-
-Player value uses **BPM (Box Plus/Minus)** — points per 100 possessions above
-league average, a published, RAPM-informed metric. Star players use the real
-Basketball-Reference 2025-26 BPM (`src/bpm_anchors.py`); everyone else gets a
-box-score + on-court plus/minus estimate calibrated to those anchors
-(`scripts/build_players.py`).
-
-When a player sits, a **minutes-redistribution model** (`src/lineups.py`) flows
-his minutes to the rest of the rotation (capped at 40 mpg), with any overflow to
-a replacement-level player (BPM −2.0). A lineup's expected margin ≈ Σ BPM × min/48,
-so the swing is the difference between the healthy and depleted lineups. This
-makes **depth matter**: OKC losing Shai barely moves (elite bench absorbs it),
-while Denver losing Jokić craters (thin behind him) — mirroring reality. Swings
-are calibrated so an MVP-level absence lands near the market's ~4–6 points.
-
-## Results (strictly out-of-sample: 2024-25 & 2025-26, 2,462 games)
-
-| Model | Accuracy | Log-loss | Brier |
-|---|---|---|---|
-| **Spread engine (Elo + HCA + rest)** | **68.2%** | **0.604** | **0.209** |
-| Elo only | 67.8% | 0.606 | 0.209 |
-| Win-rate classifier (v1) | 66.0% | 0.619 | 0.215 |
-| Naive "home wins" (56.5%) | 54.9% | 0.689 | 0.248 |
-
-68% is the realistic ceiling for pre-game models — Vegas and FiveThirtyEight
-land there too. The bigger win is **calibration**: when the app says 65%, the
-home team really wins ~63% of the time (see the reliability chart in the app).
-
-## Data
-
-- `data/games_history.csv` — 30,905 games, 2003-04 → 2025-26 (original repo
-  Kaggle data through 2021-22, then hoopR/ESPN mirrors).
-- `data/elo_ratings_2026.csv` — final neutral Elo + season net rating per team.
-- `data/players_2026.csv` — per-player 2025-26 stats + impact estimates.
-- **Live refresh** (sidebar) pulls current player stats from stats.nba.com via
-  `nba_api` (free, no key). Note: the Elo engine ships pre-built on completed
-  data; live refresh updates player availability. Rebuild ratings with
-  `python -m scripts.build_ratings` once a new season has games.
-
-## Structure
-
-```
-app.py                     # Streamlit dashboard (point-spread engine)
-src/elo.py                 # 538-style Elo power ratings
-src/ratings.py             # rest/B2B flags, rolling net rating, model spec
-src/engine.py              # SpreadEngine: margin -> win prob, with breakdown
-src/features.py            # v1 leak-free win-rate features (baseline classifier)
-src/predict.py             # v1 prediction helpers (kept for reference)
-src/live.py                # nba_api live refresh
-scripts/build_ratings.py   # build Elo + fit the point-spread engine
-scripts/evaluate.py        # holdout metrics + calibration vs baselines
-scripts/train_model.py     # retrain the v1 classifier
-models/engine.json         # fitted coefficients + final ratings
-models/metrics_tier1.json  # holdout metrics + reliability table
-ELEVATION_PLAN.md          # mission + researched roadmap (Tiers 1-4)
-```
-
-For analysis and fun — not betting. 🙂
+**Built for analysis and learning, not betting advice.**
