@@ -69,6 +69,7 @@ The repository's historical dataset contains 30,905 games spanning 2003–04 thr
 | `models/engine.json` | Saved model parameters and ratings |
 | `models/metrics_tier1.json` | Saved metrics and reliability bins |
 | `data/games_history.csv` | Historical game data |
+| [`docs/`](docs) | [Model audit](docs/MODEL_AUDIT.md), [research roadmap](docs/ELEVATION_PLAN.md), and [cross-sport research notes](docs/CROSS_SPORT_RESEARCH.md) |
 
 The sidebar's live refresh updates player data through `nba_api`; it does not automatically retrain the Elo engine.
 
