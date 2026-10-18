@@ -3,7 +3,7 @@
   "b_elo_per_point": 0.03701,
   "home_b2b_points": -2.047,
   "away_b2b_points": 2.509,
-  "sigma_points": 12.512,
+  "sigma_points": 12.519,
   "hca_elo": 70.0,
   "points_per_100_elo": 3.701,
   "train_seasons": "2003-2023",

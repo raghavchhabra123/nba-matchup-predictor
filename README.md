@@ -1,85 +1,72 @@
 # NBA Matchup Predictor
 
-An interactive **NBA win-probability and what-if dashboard** built with Python and Streamlit. Compare two teams and inspect how team strength, home court, rest, and player availability affect an estimated scoring margin.
+An interactive NBA pre-game probability dashboard built with Python and Streamlit. Explore how team strength, home court, rest and player availability change an estimated scoring margin.
 
-[Open the live dashboard](https://nba-matchup-predictor.streamlit.app/)
+[Open the live dashboard](https://nba-matchup-predictor.streamlit.app/) · [Technical audit](docs/EVALUATION_AUDIT.md) · [Data provenance and limits](data/README.md)
 
-The deployed demo currently includes projected 2026–27 rosters and travel/altitude adjustments. Those scenario features are separate from the historical base-engine evaluation below; the 68.2% figure should not be interpreted as validation of every deployed feature.
+## What this project demonstrates
 
-## The analytical question
+A sequential Elo model produces team-strength features before each game. A linear margin model adds home court and back-to-back indicators, then a normal CDF converts the margin to a home-win probability. The dashboard breaks predictions into understandable components.
 
-How can a matchup prediction be both useful and understandable? This project models an expected margin in points, then converts it to a win probability. The dashboard exposes the components rather than presenting an unexplained score.
+The historical base engine is evaluated separately from the **exploratory** roster, injury, travel and altitude scenarios. Those scenarios are not validated by the scores below. The live dashboard may run a different revision until these changes are merged and deployed.
 
-## Recorded results
+## Reproduced evaluation
 
-The checked-in [evaluation artifact](models/metrics_tier1.json) reports the following results for **2,462 games in the 2024–25 and 2025–26 seasons**:
+The [evaluation report](models/metrics_tier1.json) covers **2,462 games in seasons 2024–25 and 2025–26**. Fitted coefficients, classifier preprocessing and baseline probabilities use only seasons through 2023–24. Elo updates after each completed game, as it would during a season.
 
-| Model | Accuracy | Log loss ↓ | Brier score ↓ |
-|---|---:|---:|---:|
-| Spread engine: Elo + home court + rest | **68.2%** | **0.6044** | **0.2086** |
-| Elo only | 67.83% | 0.6062 | 0.2092 |
-| Earlier win-rate classifier | 66.0% | 0.6193 | 0.2153 |
-| Constant home-win baseline* | 54.91% | 0.6888 | 0.2478 |
+| Model | Accuracy | Log loss ↓ | Brier ↓ | ROC-AUC |
+|---|---:|---:|---:|---:|
+| Spread engine: Elo + home court + rest | 67.79% | **0.6035** | **0.2082** | **0.7306** |
+| Elo only | **67.83%** | 0.6062 | 0.2092 | 0.7292 |
+| Win-rate logistic regression | 65.68% | 0.6207 | 0.2159 | 0.7115 |
+| Training home-rate baseline | 54.91% | 0.6890 | 0.2479 | 0.5000 |
 
-These are **saved experiment results**, not a guarantee of future performance. The player-availability extension is not included in this evaluation.
+The spread engine's accuracy difference from Elo is **−0.04 percentage points**, with a paired game-date bootstrap 95% interval of **−0.97 to +0.92 points**. This does not establish an accuracy improvement over Elo. Its probability losses are slightly lower in this sample; no significance claim is made for those differences. Date resampling does not capture dependence across dates or model-selection uncertainty.
 
-*The evaluation script estimates the constant baseline's probability using seasons from 2015 onward, including the holdout period. Its probability scores are therefore a descriptive comparison, not a strictly training-only benchmark.*
+The report also includes separate season results, reliability-bin counts, average precision and three expanding-window development folds (2021, 2022, 2023). All models in a window use the same evaluation games. Per-game probabilities are saved in [reports/holdout_predictions.csv](reports/holdout_predictions.csv).
 
-## Method
+**These seasons have already been inspected during project development.** Treat this as a retrospective chronological evaluation, not a pristine, untouched final test. A future frozen forecast log is the next step. The previously reported 68.2% artifact had coefficients inconsistent with the checked-in engine; these results replace it.
 
-1. Build sequential Elo ratings from historical games.
-2. Fit a margin model using the Elo difference, home court, and back-to-back indicators.
-3. Convert the expected margin into a probability using a normal cumulative distribution function.
-4. Evaluate accuracy, log loss, Brier score, and reliability bins on later seasons.
+## Reproduce locally
 
-The build script uses seasons through 2023 for model fitting; its home-court/rest refit uses 2016–2023. Sequential Elo updates use completed games, while the dashboard's final ratings incorporate the available history.
-
-Rounded fitted effects include a **2.47-point home advantage**, **3.7 points per 100 Elo**, a **−1.78-point home back-to-back effect**, and a **+2.07-point away back-to-back effect** on home margin. The residual scale is approximately **12.51 points**.
-
-See [model building](scripts/build_ratings.py) and [evaluation](scripts/evaluate.py) for the implementation.
-
-## Player-availability scenarios
-
-The dashboard also estimates lineup changes using BPM-based player values and redistributed minutes. This is an exploratory scenario layer, not a separately validated injury-prediction model. Its assumptions should not be confused with observed causal player effects or the holdout results above.
-
-## Run locally
+Python 3.10 or 3.11 is recommended. From the repository root:
 
 ```bash
-pip install -r requirements.txt
+python3.10 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-eval.txt
+python -m pytest -q
 python -m scripts.build_ratings
 python -m scripts.evaluate
-streamlit run app.py
+python -m scripts.stress_test
 ```
 
-A fitted engine is included, so rebuilding can be skipped when exploring the existing dashboard. Re-run the scripts to reproduce or audit the saved evaluation in your environment.
+No API keys or network data downloads are needed for evaluation. `requirements-eval.txt` pins the numerical stack; the report records Python/package versions and the input CSV SHA-256. Re-running evaluation deterministically rebuilds benchmarks from training data and never loads the deployment classifiers. Minor floating-point differences across platforms are possible.
 
-## Data and structure
+To run the dashboard, additionally install `requirements.txt`, then run `streamlit run app.py`. Live refresh and chat use optional external services; historical evaluation does not. To rebuild the optional legacy deployment classifiers, install `requirements-dev.txt` and run `python -m scripts.train_model`. Those full-data artifacts must never be used as holdout estimators.
 
-The repository's historical dataset contains 30,905 games spanning 2003–04 through 2025–26. The project combines the earlier Kaggle-based history with later hoopR/ESPN mirrors.
+## Repository guide
 
-| File or directory | Purpose |
+| Path | Purpose |
 |---|---|
-| `app.py` | Streamlit interface and model breakdown |
-| `src/elo.py` | Sequential team-strength ratings |
-| `src/engine.py` | Margin-to-probability engine |
-| `src/ratings.py` | Rest indicators and model specification |
-| `src/lineups.py` | Player-availability scenario logic |
-| `scripts/build_ratings.py` | Fit and export the engine |
-| `scripts/evaluate.py` | Evaluate predictions and calibration |
-| `models/engine.json` | Saved model parameters and ratings |
-| `models/metrics_tier1.json` | Saved metrics and reliability bins |
-| `data/games_history.csv` | Historical game data |
-| [`docs/`](docs) | [Model audit](docs/MODEL_AUDIT.md), [research roadmap](docs/ELEVATION_PLAN.md), and [cross-sport research notes](docs/CROSS_SPORT_RESEARCH.md) |
+| `app.py` | Dashboard, scenario controls and quality panel |
+| `src/elo.py` | Sequential pre-game Elo |
+| `src/features.py` | Shifted form and prior-day standings features |
+| `src/validation.py` | Game integrity and temporal split contracts |
+| `scripts/build_ratings.py` | Shared training-only margin fit and engine export |
+| `scripts/evaluate.py` | Fresh fits, baselines, rolling evaluation and uncertainty |
+| `tests/` | Leakage, data integrity, metric and residual-scale regression tests |
+| `.github/workflows/evaluation.yml` | Automated tests, rebuild and evaluation artifacts |
+| `data/games_history.csv` | Committed historical snapshot; see provenance limitations |
+| `models/engine.json` | Base coefficients plus final-history ratings for future scenarios |
 
-The sidebar's live refresh updates player data through `nba_api`; it does not automatically retrain the Elo engine.
+## Limits and next steps
 
-## Limitations and next steps
+- The snapshot has 30,905 rows, with mixed game coverage across seasons. Raw ingestion, stable source game IDs, game types and neutral-site flags are missing. Its upstream completeness has not been independently verified.
+- Designated home teams are treated as having home court, including potential neutral-site games. This is a modeling limitation.
+- Standings and recent form use completed results only; missing values are imputed within training pipelines. Date-only data cannot support tipoff-time injury availability claims.
+- Roster assignments are manual, without transaction-level source citations; treat them as scenarios, not verified current rosters. Live player refresh does not rebuild saved projected team power. Roster/BPM projections and hand-set travel/altitude effects need separate historical validation. Existing stress checks establish internal consistency, not predictive accuracy or causal effects.
+- Priorities: reconstruct source provenance and game types, add neutral venues, freeze forecasts before tipoff, then evaluate scenario extensions against the base engine.
+- The [earlier exploratory notebook](https://github.com/raghavchhabra123/NBA_HomeCourt_Advantage) is a different experiment with same-day standings leakage risk; its 77.9% headline is not a validated comparison to this pipeline.
 
-- Accuracy alone does not establish calibration; inspect reliability bins and probability losses.
-- Player scenarios need separate historical validation.
-- A cleaner benchmark would fit the constant baseline on training data only.
-- Rolling-origin evaluation and uncertainty intervals would strengthen the results.
-- Data-source changes, roster changes, and future seasons may shift performance.
-- Results here belong to this pipeline. The [earlier exploratory notebook](https://github.com/raghavchhabra123/NBA_HomeCourt_Advantage) uses a different approach and should not be treated as the same experiment.
-
-**Built for analysis and learning, not betting advice.**
+Built for analysis and learning, not betting advice.
