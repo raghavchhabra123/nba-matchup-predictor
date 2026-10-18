@@ -15,6 +15,8 @@ sys.path.insert(0, str(ROOT))
 
 from src.features import MODEL_COLS, build_training_frame, team_snapshot  # noqa: E402
 
+from sklearn.impute import SimpleImputer
+from src.validation import temporal_split, validate_games
 from sklearn.linear_model import LogisticRegression  # noqa: E402
 from sklearn.metrics import (accuracy_score, brier_score_loss,  # noqa: E402
                              roc_auc_score)
@@ -33,7 +35,7 @@ TEST_SEASONS = [2024, 2025]  # 2024-25 and 2025-26 held out
 def make_models():
     models = {
         'Logistic Regression': make_pipeline(
-            StandardScaler(), LogisticRegression(max_iter=2000, C=1.0)),
+            SimpleImputer(strategy='median'), StandardScaler(), LogisticRegression(max_iter=2000, C=1.0)),
     }
     if HAS_XGB:
         models['XGBoost'] = XGBClassifier(
@@ -45,10 +47,10 @@ def make_models():
 
 def main():
     games = pd.read_csv(ROOT / 'data' / 'games_history.csv', parse_dates=['date'])
+    validate_games(games)
     df = build_training_frame(games)
 
-    train = df[~df.season.isin(TEST_SEASONS)]
-    test = df[df.season.isin(TEST_SEASONS)]
+    train, test = temporal_split(df, TEST_SEASONS)
     Xtr, ytr = train[MODEL_COLS], train.home_win
     Xte, yte = test[MODEL_COLS], test.home_win
     print(f'train {len(train)} games (seasons {train.season.min()}-{train.season.max()}), '

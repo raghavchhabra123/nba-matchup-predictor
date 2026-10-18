@@ -426,7 +426,7 @@ Matchup: {HN} at home vs {AN} away.
 Prediction: {HN} win probability {p:.0%}, {AN} {1-p:.0%}. Model line {res['spread_str']}, expected margin {res['margin']:+.1f} for the home team.
 Point breakdown (+ favors {HN}): team strength {comp['power']:+.1f}, home court {comp['home_court']:+.1f}, rest {comp['rest']:+.1f}, players sitting {comp['players']:+.1f}, travel/altitude {comp.get('travel', 0):+.1f}.
 Sitting out: {', '.join(n for n, _ in out_home) or 'nobody'} for {HN}; {', '.join(n for n, _ in out_away) or 'nobody'} for {AN}.
-How the model works: win probability = normal CDF of (expected margin / {eng.sigma:.1f}). Home court is worth +{eng.hca:.1f} pts. A back-to-back costs ~2 pts. Team strength is {eng.b_elo*100:.1f} pts per 100 Elo. Denver and Utah get an altitude bonus (+2.2 / +1.2). Player value = BPM (points per 100 possessions above average); a star is worth ~4-6 pts and their minutes redistribute to the bench, so depth matters. 2026-27 team ratings blend current-roster BPM with regressed Elo. On a 2024-26 holdout the engine hit 68% accuracy, matching the Vegas/FiveThirtyEight ceiling. Plain summary: {re.sub(r'[*]', '', take)}"""
+How the model works: win probability = normal CDF of (expected margin / {eng.sigma:.1f}). Home court is worth +{eng.hca:.1f} pts. A back-to-back costs ~2 pts. Team strength is {eng.b_elo*100:.1f} pts per 100 Elo. Denver and Utah get an altitude bonus (+2.2 / +1.2). Player value = BPM (points per 100 possessions above average); a star is worth ~4-6 pts and their minutes redistribute to the bench, so depth matters. 2026-27 team ratings blend current-roster BPM with regressed Elo. The rebuilt historical base engine scored about 68% accuracy on 2024-26 games. This does not validate roster projections, injuries, or travel scenarios; no market comparison was performed. Plain summary: {re.sub(r'[*]', '', take)}"""
 
 # ------------------------------------------------------------------ tabs
 def roster_ui(col, abbr, key, out_list, lvl):
@@ -496,18 +496,18 @@ def render_quality():
     if meta:
         m = meta['metrics']
         best = m.get('Spread engine (Elo+HCA+rest)', {})
-        st.markdown('**Graded on 2,462 games from 2024-26 the model never saw '
-                    'during training.**')
+        st.markdown(f"**Historical base engine: {best.get('n', 0):,} evaluation games "
+                    "from 2024–26. Fitted parameters use earlier seasons.**")
         k1, k2, k3 = st.columns(3)
         k1.metric('Accuracy', f"{best.get('accuracy', 0):.1%}",
-                  help='Share of games where the favorite won.')
-        k2.metric('Always-home → us', '55% → 68%',
-                  help='Simplest baseline — always pick the home team — already wins ~55% '
-                       'because of home-court advantage (not 50%). Our engine reaches 68%.')
-        k3.metric('Calibration', 'On target',
-                  help='When it says 65%, home teams really win ~63%.')
-        st.caption('~68% is the realistic ceiling — Vegas and FiveThirtyEight land there '
-                   'too. Single games are just noisy.')
+                  help='Share of games where the predicted favorite won.')
+        elo = m.get('Elo only', {})
+        k2.metric('Elo baseline accuracy', f"{elo.get('accuracy', 0):.1%}")
+        k3.metric('Brier score', f"{best.get('brier', 0):.4f}",
+                  help='Average squared probability error; lower is better.')
+        st.caption('Retrospective evaluation with Elo updated after completed games. '
+                   'Accuracy is similar to Elo alone. Roster, player-availability, '
+                   'travel and altitude scenarios have not been validated by this test.')
 
         rel = pd.DataFrame(meta.get('reliability_spread_engine', []))
         if not rel.empty:
@@ -524,7 +524,8 @@ def render_quality():
                 ln = pts.mark_line(color=HOME_C, opacity=0.5)
                 st.altair_chart((diag + ln + pts).properties(height=300),
                                 use_container_width=True)
-                st.caption('Dots on the dashed line = the probabilities are honest.')
+                st.caption('Closer to the dashed line indicates better calibration in this sample. '
+                           'Small bins are uncertain; inspect the game counts.')
             except Exception:
                 st.line_chart(rel.set_index('predicted')[['observed']])
 
@@ -538,9 +539,9 @@ def render_quality():
         if getattr(eng, 'projected', False):
             st.caption('**2026-27 projection:** each team = its current roster’s value '
                        '(2025-26 BPM reassigned to post-offseason teams + rookies) blended '
-                       'with regressed 538-style Elo. Accuracy (68%) was measured on the '
-                       'Elo engine over 2003-2026; the fresh-roster projection can’t be '
-                       'back-tested until games are played. For analysis and fun, not betting.')
+                       'with regressed 538-style Elo. Historical evaluation covers the base '
+                       'engine on 2024–26 games only; these roster projections need '
+                       'separate validation. For analysis and fun, not betting.')
         else:
             st.caption('538-style Elo over 30,905 games, 2003-2026. For analysis, not betting.')
 

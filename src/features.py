@@ -40,9 +40,12 @@ def add_daily_rank(tg: pd.DataFrame) -> pd.DataFrame:
     """Pre-game league rank (1=best) by cumulative season win%, per day."""
     out = []
     for season, sdf in tg.groupby('season'):
-        pivot = (sdf.pivot_table(index='date', columns='team',
-                                 values='win_rate_season', aggfunc='last')
-                    .ffill())
+        sdf = sdf.sort_values(['team', 'date']).copy()
+        grp = sdf.groupby('team')['win']
+        sdf['post_win_rate'] = grp.cumsum() / (grp.cumcount() + 1)
+        # Carry completed results forward, then lag the entire league by one day.
+        pivot = (sdf.pivot(index='date', columns='team', values='post_win_rate')
+                 .ffill().shift(1))
         rank = pivot.rank(axis=1, ascending=False, method='min')
         r = rank.stack().rename('rank_W_PCT_pre').reset_index()
         r['season'] = season
@@ -65,7 +68,7 @@ def build_training_frame(games: pd.DataFrame) -> pd.DataFrame:
               'home_rate_last10', 'rank_W_PCT_pre']:
         df[f'diff_{f}'] = df[f'H_{f}'] - df[f'A_{f}']
     df = df.rename(columns={'diff_rank_W_PCT_pre': 'diff_rank_W_PCT_pre'})
-    df[MODEL_COLS] = df[MODEL_COLS].fillna(df[MODEL_COLS].median())
+    # Keep missing values: the estimator must fit imputation on training rows only.
     return df
 
 

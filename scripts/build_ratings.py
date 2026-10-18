@@ -20,6 +20,7 @@ import pandas as pd
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
+from src.validation import validate_games
 from src.elo import HCA_ELO, compute_elo  # noqa: E402
 from src.ratings import add_net_rating, add_rest_flags  # noqa: E402
 
@@ -32,8 +33,27 @@ def fit_ols(X: np.ndarray, y: np.ndarray) -> np.ndarray:
     return beta  # [intercept, *coefs]
 
 
+def fit_margin_model(train):
+    """Fit on supplied training rows; scale residuals of the exported model."""
+    Xcols = ['elo_diff_pre', 'home_b2b', 'away_b2b']
+    beta = fit_ols(train[Xcols].values, train['margin'].values)
+    recent = train[train.season >= 2016]
+    if recent.empty:
+        raise ValueError('Margin fit needs modern-era training games (2016+)')
+    beta_recent = fit_ols(recent[Xcols].values, recent['margin'].values)
+    beta[[0, 2, 3]] = beta_recent[[0, 2, 3]]
+    # Round first so sigma describes the exact coefficients used in prediction.
+    beta = np.array([round(float(beta[0]), 3), round(float(beta[1]), 5),
+                     round(float(beta[2]), 3), round(float(beta[3]), 3)])
+    residual = train['margin'].values - np.column_stack([np.ones(len(train)), train[Xcols]]) @ beta
+    return dict(zip(['intercept_hca_points', 'b_elo_per_point',
+                     'home_b2b_points', 'away_b2b_points'], beta),
+                sigma_points=round(float(np.sqrt(np.mean(residual ** 2))), 3))
+
+
 def main():
     games = pd.read_csv(ROOT / 'data' / 'games_history.csv', parse_dates=['date'])
+    validate_games(games)
     g, final = compute_elo(games)
     g = add_rest_flags(g)
     g = add_net_rating(g)
@@ -42,19 +62,10 @@ def main():
     d = g.dropna(subset=['elo_diff_pre', 'home_b2b', 'away_b2b', 'margin']).copy()
     train = d[d.season <= TRAIN_MAX]
 
-    Xcols = ['elo_diff_pre', 'home_b2b', 'away_b2b']
-    beta = fit_ols(train[Xcols].values, train['margin'].values)
-    a0, b_elo, c_h, c_a = beta
-
-    # Home court has declined over time — refit the intercept on the modern era
-    # (2016+) so it reflects today's ~2-pt reality instead of the 2003-2026 blend.
-    recent = train[train.season >= 2016]
-    beta_r = fit_ols(recent[Xcols].values, recent['margin'].values)
-    a0 = beta_r[0]          # use recent-era home-court advantage
-    c_h, c_a = beta_r[2], beta_r[3]
-    print(f'HCA all-history {beta[0]:+.2f} -> recent-era {a0:+.2f} pts')
-    pred_train = (np.column_stack([np.ones(len(train)), train[Xcols].values]) @ beta)
-    sigma = float(np.sqrt(np.mean((train['margin'].values - pred_train) ** 2)))
+    fitted = fit_margin_model(train)
+    a0, b_elo = fitted['intercept_hca_points'], fitted['b_elo_per_point']
+    c_h, c_a = fitted['home_b2b_points'], fitted['away_b2b_points']
+    sigma = fitted['sigma_points']
 
     # Season net rating per team from the most recent season (for display + context)
     last_season = int(g.season.max())

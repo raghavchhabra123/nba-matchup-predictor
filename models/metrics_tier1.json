@@ -1,95 +1,374 @@
 {
-  "holdout_seasons": [
+  "train_seasons": [
+    2003,
+    2023
+  ],
+  "test_seasons": [
     2024,
     2025
   ],
+  "train_last_date": "2024-04-14",
+  "test_first_date": "2024-10-22",
+  "baseline_probability": 0.5678129992432523,
+  "baseline_training_n": 11893,
   "metrics": {
     "Spread engine (Elo+HCA+rest)": {
-      "accuracy": 0.682,
-      "log_loss": 0.6044,
-      "brier": 0.2086,
+      "accuracy": 0.6779,
+      "log_loss": 0.6035,
+      "brier": 0.2082,
+      "roc_auc": 0.7306,
+      "average_precision": 0.7526,
       "n": 2462
     },
     "Elo only": {
       "accuracy": 0.6783,
       "log_loss": 0.6062,
       "brier": 0.2092,
+      "roc_auc": 0.7292,
+      "average_precision": 0.7494,
       "n": 2462
     },
-    "Naive home (56.5%)": {
+    "Training home-rate baseline": {
       "accuracy": 0.5491,
-      "log_loss": 0.6888,
-      "brier": 0.2478,
+      "log_loss": 0.689,
+      "brier": 0.2479,
+      "roc_auc": 0.5,
+      "average_precision": 0.5491,
       "n": 2462
     },
-    "Win-rate classifier (v1)": {
-      "accuracy": 0.66,
-      "log_loss": 0.6193,
-      "brier": 0.2153,
+    "Win-rate logistic (train-only)": {
+      "accuracy": 0.6568,
+      "log_loss": 0.6207,
+      "brier": 0.2159,
+      "roc_auc": 0.7115,
+      "average_precision": 0.7406,
       "n": 2462
     }
   },
+  "coefficients": {
+    "intercept_hca_points": 2.031,
+    "b_elo_per_point": 0.03701,
+    "home_b2b_points": -2.047,
+    "away_b2b_points": 2.509,
+    "sigma_points": 12.519
+  },
+  "holdout_seasons": [
+    2024,
+    2025
+  ],
+  "protocol": "Frozen fitted parameters; sequential pre-game Elo updated after completed games. Retrospective evaluation, not a pristine model-selection holdout.",
+  "data_sha256": "b056a3f7b882f5e617880f06f9ff9431e1354d4f54e08d9844bff13678fe77c8",
+  "environment": {
+    "python": "3.10.19",
+    "numpy": "2.2.6",
+    "pandas": "2.2.3",
+    "scikit_learn": "1.6.1"
+  },
   "reliability_spread_engine": [
     {
-      "bin": 0.15,
-      "predicted": 0.166,
+      "bin": 0.05,
+      "predicted": 0.0967,
       "observed": 0.0,
-      "n": 33
+      "n": 3
+    },
+    {
+      "bin": 0.15,
+      "predicted": 0.1692,
+      "observed": 0.0233,
+      "n": 43
     },
     {
       "bin": 0.25,
-      "predicted": 0.257,
-      "observed": 0.158,
-      "n": 139
+      "predicted": 0.2579,
+      "observed": 0.1753,
+      "n": 154
     },
     {
       "bin": 0.35,
-      "predicted": 0.355,
-      "observed": 0.338,
-      "n": 269
+      "predicted": 0.3549,
+      "observed": 0.3486,
+      "n": 284
     },
     {
       "bin": 0.45,
-      "predicted": 0.454,
-      "observed": 0.359,
-      "n": 395
+      "predicted": 0.4527,
+      "observed": 0.3942,
+      "n": 411
     },
     {
       "bin": 0.55,
-      "predicted": 0.552,
-      "observed": 0.575,
-      "n": 487
+      "predicted": 0.5511,
+      "observed": 0.5804,
+      "n": 491
     },
     {
       "bin": 0.65,
-      "predicted": 0.65,
-      "observed": 0.625,
-      "n": 499
+      "predicted": 0.6482,
+      "observed": 0.6297,
+      "n": 478
     },
     {
       "bin": 0.75,
-      "predicted": 0.748,
-      "observed": 0.762,
-      "n": 391
+      "predicted": 0.7467,
+      "observed": 0.7742,
+      "n": 372
     },
     {
       "bin": 0.85,
-      "predicted": 0.842,
-      "observed": 0.819,
-      "n": 215
+      "predicted": 0.841,
+      "observed": 0.8182,
+      "n": 198
     },
     {
       "bin": 0.95,
-      "predicted": 0.921,
-      "observed": 0.939,
-      "n": 33
+      "predicted": 0.9206,
+      "observed": 0.9643,
+      "n": 28
     }
   ],
-  "coefficients": {
-    "home_court_points": 2.47,
-    "points_per_100_elo": 3.7,
-    "home_b2b_points": -1.779,
-    "away_b2b_points": 2.067,
-    "sigma_points": 12.512
-  }
+  "paired_spread_vs_elo": {
+    "accuracy_difference": -0.00040617384240454913,
+    "ci_95": [
+      -0.009671607632003051,
+      0.00921478974654378
+    ],
+    "draws": 2000,
+    "seed": 42,
+    "unit": "game date",
+    "limitation": "Does not account for dependence across dates or model-selection uncertainty."
+  },
+  "per_season": {
+    "2024": {
+      "Spread engine (Elo+HCA+rest)": {
+        "accuracy": 0.6702,
+        "log_loss": 0.607,
+        "brier": 0.2101,
+        "roc_auc": 0.726,
+        "average_precision": 0.7495,
+        "n": 1231
+      },
+      "Elo only": {
+        "accuracy": 0.6677,
+        "log_loss": 0.6138,
+        "brier": 0.213,
+        "roc_auc": 0.7209,
+        "average_precision": 0.7437,
+        "n": 1231
+      },
+      "Training home-rate baseline": {
+        "accuracy": 0.5435,
+        "log_loss": 0.6906,
+        "brier": 0.2487,
+        "roc_auc": 0.5,
+        "average_precision": 0.5435,
+        "n": 1231
+      },
+      "Win-rate logistic (train-only)": {
+        "accuracy": 0.6442,
+        "log_loss": 0.6291,
+        "brier": 0.2201,
+        "roc_auc": 0.6972,
+        "average_precision": 0.7332,
+        "n": 1231
+      }
+    },
+    "2025": {
+      "Spread engine (Elo+HCA+rest)": {
+        "accuracy": 0.6856,
+        "log_loss": 0.5999,
+        "brier": 0.2064,
+        "roc_auc": 0.7349,
+        "average_precision": 0.7562,
+        "n": 1231
+      },
+      "Elo only": {
+        "accuracy": 0.6889,
+        "log_loss": 0.5987,
+        "brier": 0.2055,
+        "roc_auc": 0.7378,
+        "average_precision": 0.7561,
+        "n": 1231
+      },
+      "Training home-rate baseline": {
+        "accuracy": 0.5548,
+        "log_loss": 0.6875,
+        "brier": 0.2472,
+        "roc_auc": 0.5,
+        "average_precision": 0.5548,
+        "n": 1231
+      },
+      "Win-rate logistic (train-only)": {
+        "accuracy": 0.6694,
+        "log_loss": 0.6124,
+        "brier": 0.2118,
+        "roc_auc": 0.7263,
+        "average_precision": 0.7494,
+        "n": 1231
+      }
+    }
+  },
+  "rolling_origin_development": [
+    {
+      "train_seasons": [
+        2003,
+        2020
+      ],
+      "test_seasons": [
+        2021
+      ],
+      "train_last_date": "2021-07-20",
+      "test_first_date": "2021-10-03",
+      "baseline_probability": 0.5722457100223824,
+      "baseline_training_n": 8042,
+      "metrics": {
+        "Spread engine (Elo+HCA+rest)": {
+          "accuracy": 0.6609,
+          "log_loss": 0.632,
+          "brier": 0.2205,
+          "roc_auc": 0.6907,
+          "average_precision": 0.7135,
+          "n": 1389
+        },
+        "Elo only": {
+          "accuracy": 0.6537,
+          "log_loss": 0.6371,
+          "brier": 0.2224,
+          "roc_auc": 0.69,
+          "average_precision": 0.7132,
+          "n": 1389
+        },
+        "Training home-rate baseline": {
+          "accuracy": 0.5529,
+          "log_loss": 0.6883,
+          "brier": 0.2476,
+          "roc_auc": 0.5,
+          "average_precision": 0.5529,
+          "n": 1389
+        },
+        "Win-rate logistic (train-only)": {
+          "accuracy": 0.6271,
+          "log_loss": 0.6475,
+          "brier": 0.2276,
+          "roc_auc": 0.6686,
+          "average_precision": 0.6988,
+          "n": 1389
+        }
+      },
+      "coefficients": {
+        "intercept_hca_points": 1.982,
+        "b_elo_per_point": 0.03662,
+        "home_b2b_points": -1.555,
+        "away_b2b_points": 2.493,
+        "sigma_points": 12.298
+      }
+    },
+    {
+      "train_seasons": [
+        2003,
+        2021
+      ],
+      "test_seasons": [
+        2022
+      ],
+      "train_last_date": "2022-06-16",
+      "test_first_date": "2022-09-30",
+      "baseline_probability": 0.5693987912204432,
+      "baseline_training_n": 9431,
+      "metrics": {
+        "Spread engine (Elo+HCA+rest)": {
+          "accuracy": 0.6304,
+          "log_loss": 0.644,
+          "brier": 0.2262,
+          "roc_auc": 0.6564,
+          "average_precision": 0.7079,
+          "n": 1231
+        },
+        "Elo only": {
+          "accuracy": 0.6312,
+          "log_loss": 0.6485,
+          "brier": 0.2279,
+          "roc_auc": 0.6518,
+          "average_precision": 0.702,
+          "n": 1231
+        },
+        "Training home-rate baseline": {
+          "accuracy": 0.58,
+          "log_loss": 0.6805,
+          "brier": 0.2437,
+          "roc_auc": 0.5,
+          "average_precision": 0.58,
+          "n": 1231
+        },
+        "Win-rate logistic (train-only)": {
+          "accuracy": 0.5995,
+          "log_loss": 0.6594,
+          "brier": 0.233,
+          "roc_auc": 0.6303,
+          "average_precision": 0.6823,
+          "n": 1231
+        }
+      },
+      "coefficients": {
+        "intercept_hca_points": 2.013,
+        "b_elo_per_point": 0.03675,
+        "home_b2b_points": -1.991,
+        "away_b2b_points": 2.311,
+        "sigma_points": 12.423
+      }
+    },
+    {
+      "train_seasons": [
+        2003,
+        2022
+      ],
+      "test_seasons": [
+        2023
+      ],
+      "train_last_date": "2023-04-09",
+      "test_first_date": "2023-10-24",
+      "baseline_probability": 0.5706246482836241,
+      "baseline_training_n": 10662,
+      "metrics": {
+        "Spread engine (Elo+HCA+rest)": {
+          "accuracy": 0.6621,
+          "log_loss": 0.6097,
+          "brier": 0.211,
+          "roc_auc": 0.7242,
+          "average_precision": 0.7511,
+          "n": 1231
+        },
+        "Elo only": {
+          "accuracy": 0.6491,
+          "log_loss": 0.615,
+          "brier": 0.214,
+          "roc_auc": 0.7144,
+          "average_precision": 0.7487,
+          "n": 1231
+        },
+        "Training home-rate baseline": {
+          "accuracy": 0.5435,
+          "log_loss": 0.6909,
+          "brier": 0.2488,
+          "roc_auc": 0.5,
+          "average_precision": 0.5435,
+          "n": 1231
+        },
+        "Win-rate logistic (train-only)": {
+          "accuracy": 0.6426,
+          "log_loss": 0.6306,
+          "brier": 0.2206,
+          "roc_auc": 0.6978,
+          "average_precision": 0.7308,
+          "n": 1231
+        }
+      },
+      "coefficients": {
+        "intercept_hca_points": 2.008,
+        "b_elo_per_point": 0.03669,
+        "home_b2b_points": -1.895,
+        "away_b2b_points": 2.484,
+        "sigma_points": 12.443
+      }
+    }
+  ]
 }
