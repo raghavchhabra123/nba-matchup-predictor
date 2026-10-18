@@ -11,3 +11,5 @@ The validator rejects missing fields, nonfinite numbers, tied completed scores, 
 To improve upstream reproducibility, preserve immutable source URLs/version IDs and retrieval dates; retain source game IDs, game type and neutral-site flags; record merge/deduplication decisions and licenses; and compare per-season counts to source manifests. Do not silently filter guessed preseason dates: season calendars differ.
 
 Player files and 2026–27 projections are separate scenario inputs. `scripts/build_players.py` currently expects `/tmp/hoopr/nba/player_box/parquet/player_box_2026.parquet`, which is not in the repository. The historical base evaluation does not depend on this file; rebuilding the player pipeline from a clean checkout remains incomplete.
+
+`build_projection.py` uses a hand-written `MOVES` dictionary and rookie assignments without per-transaction citations or verification dates. Treat the resulting 2026–27 roster files as manually specified scenarios, not verified current rosters. Live player refresh does not rebuild the saved projected team power, so live player data and static team power can describe different roster states.

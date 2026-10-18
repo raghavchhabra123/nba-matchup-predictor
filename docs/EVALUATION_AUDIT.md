@@ -15,6 +15,7 @@ Scope: public repositories under `raghavchhabra123`, focusing on the maintained 
 | Medium | Daily standings forward-filled **pre-game** win rates, leaving idle teams one result behind. | Carry post-game cumulative rates forward, then lag the entire date table before ranking. |
 | Medium | The UI called calibration “On target” and 68% a Vegas/FiveThirtyEight ceiling without a matched benchmark. | Show actual accuracy, Elo comparison and Brier score; qualify calibration and scenario coverage. |
 | Medium | No automated leakage/data tests or CI; broad dependency lower bounds; no per-game evaluation output. | 14 regression tests, CI, pinned numerical environment, input hash, environment metadata and per-game probabilities. |
+| Open | Projected rosters are hard-coded in `MOVES`/`ROOKIES` without source dates; live refresh does not rebuild projected power. | Label the dashboard input as a manual roster scenario. Actual roster verification and coordinated refresh remain open. |
 | Open | No raw historical ingestion script, source IDs, game type or neutral-site flags. Player rebuild depends on a local `/tmp/hoopr` file. | Documented in `data/README.md`; source reconstruction requires verified upstream snapshots. No guessed replacement data was introduced. |
 
 ## What the results establish

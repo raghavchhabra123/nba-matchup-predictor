@@ -131,7 +131,7 @@ def load_data(live_stamp: str):
         source = f'Live · {season_lbl}'
     elif proj.exists():
         players = pd.read_csv(proj)
-        source = '2026-27 (projected rosters)'
+        source = '2026-27 (manual roster scenario)'
     else:
         players = pd.read_csv(DATA / 'players_2026.csv')
         source = '2025-26 (final)'
@@ -419,7 +419,7 @@ st.markdown(
 
 # facts injected into the chatbot so it answers from real numbers only
 HN, AN = abbr2name.get(home_team), abbr2name.get(away_team)
-_facts = f"""Season: 2026-27 (projected rosters after the 2026 offseason).
+_facts = f"""Season: 2026-27 roster scenario. Player assignments are manually specified and not independently verified as current rosters.
 Matchup: {HN} at home vs {AN} away.
 {HN} projected power: {eng.team_strength(home_team):+.1f} pts vs an average team.
 {AN} projected power: {eng.team_strength(away_team):+.1f} pts.
@@ -537,8 +537,8 @@ def render_quality():
         rt.index = rt.index + 1
         st.dataframe(rt, width='stretch', height=320)
         if getattr(eng, 'projected', False):
-            st.caption('**2026-27 projection:** each team = its current roster’s value '
-                       '(2025-26 BPM reassigned to post-offseason teams + rookies) blended '
+            st.caption('**2026-27 roster scenario:** each team = its manually assigned roster’s value '
+                       '(2025-26 BPM reassigned to scenario teams + rookies) blended '
                        'with regressed 538-style Elo. Historical evaluation covers the base '
                        'engine on 2024–26 games only; these roster projections need '
                        'separate validation. For analysis and fun, not betting.')

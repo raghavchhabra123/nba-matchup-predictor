@@ -40,7 +40,7 @@ class SpreadEngine:
         if proj.exists():
             self.power = json.loads(proj.read_text())['power']
             self.projected = True
-            self.season_label = '2026-27 (projected)'
+            self.season_label = '2026-27 (manual roster scenario)'
         else:
             self.power = {t: self.b_elo * (self.elo[t] - 1500) for t in self.elo}
             self.projected = False

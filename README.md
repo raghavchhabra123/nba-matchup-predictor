@@ -65,7 +65,7 @@ To run the dashboard, additionally install `requirements.txt`, then run `streaml
 - The snapshot has 30,905 rows, with mixed game coverage across seasons. Raw ingestion, stable source game IDs, game types and neutral-site flags are missing. Its upstream completeness has not been independently verified.
 - Designated home teams are treated as having home court, including potential neutral-site games. This is a modeling limitation.
 - Standings and recent form use completed results only; missing values are imputed within training pipelines. Date-only data cannot support tipoff-time injury availability claims.
-- Roster/BPM projections and hand-set travel/altitude effects need separate historical validation. Existing stress checks establish internal consistency, not predictive accuracy or causal effects.
+- Roster assignments are manual, without transaction-level source citations; treat them as scenarios, not verified current rosters. Live player refresh does not rebuild saved projected team power. Roster/BPM projections and hand-set travel/altitude effects need separate historical validation. Existing stress checks establish internal consistency, not predictive accuracy or causal effects.
 - Priorities: reconstruct source provenance and game types, add neutral venues, freeze forecasts before tipoff, then evaluate scenario extensions against the base engine.
 - The [earlier exploratory notebook](https://github.com/raghavchhabra123/NBA_HomeCourt_Advantage) is a different experiment with same-day standings leakage risk; its 77.9% headline is not a validated comparison to this pipeline.
 
