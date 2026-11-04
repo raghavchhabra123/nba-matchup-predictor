@@ -46,13 +46,10 @@ def main():
     beta = fit_ols(train[Xcols].values, train['margin'].values)
     a0, b_elo, c_h, c_a = beta
 
-    # Home court has declined over time — refit the intercept on the modern era
-    # (2016+) so it reflects today's ~2-pt reality instead of the 2003-2026 blend.
-    recent = train[train.season >= 2016]
-    beta_r = fit_ols(recent[Xcols].values, recent['margin'].values)
-    a0 = beta_r[0]          # use recent-era home-court advantage
-    c_h, c_a = beta_r[2], beta_r[3]
-    print(f'HCA all-history {beta[0]:+.2f} -> recent-era {a0:+.2f} pts')
+    # NOTE: a recent-era (2016+) refit was tested and did not materially improve
+    # holdout log-loss (0.6042 vs 0.6043), and mixing recent-era HCA/B2B
+    # with all-era b_elo/sigma left the model internally inconsistent. Keep one
+    # coherent fit so every published coefficient matches what the app runs.
     pred_train = (np.column_stack([np.ones(len(train)), train[Xcols].values]) @ beta)
     sigma = float(np.sqrt(np.mean((train['margin'].values - pred_train) ** 2)))
 

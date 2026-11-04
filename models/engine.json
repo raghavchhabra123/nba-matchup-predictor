@@ -1,8 +1,8 @@
 {
-  "intercept_hca_points": 2.031,
+  "intercept_hca_points": 2.47,
   "b_elo_per_point": 0.03701,
-  "home_b2b_points": -2.047,
-  "away_b2b_points": 2.509,
+  "home_b2b_points": -1.779,
+  "away_b2b_points": 2.067,
   "sigma_points": 12.512,
   "hca_elo": 70.0,
   "points_per_100_elo": 3.701,
