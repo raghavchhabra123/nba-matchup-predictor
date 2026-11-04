@@ -511,6 +511,15 @@ def render_quality():
         st.caption('Single games are noisy; judge the model on probabilities over many '
                    'games, not on any one result.')
 
+        tail = meta.get('underdog_tail_spread_engine')
+        if tail and tail.get('n'):
+            st.markdown(
+                f"**Known weakness — heavy home underdogs.** In the {tail['n']} holdout games "
+                f"where the model gave the home team under {tail['threshold']:.0%}, it "
+                f"predicted {tail['mean_predicted']:.1%} on average; those teams actually won "
+                f"{tail['observed']:.1%}. A recalibration fix is being tested but isn't "
+                f"applied yet.")
+
         rel = pd.DataFrame(meta.get('reliability_spread_engine', []))
         if not rel.empty:
             try:
@@ -542,8 +551,8 @@ def render_quality():
                        '(2025-26 BPM reassigned to post-offseason teams + rookies) blended '
                        'with regressed 538-style Elo. The 68% accuracy was measured on the '
                        'base Elo + home-court + rest engine (trained 2003-24, tested on '
-                       '2024-26); the fresh-roster projection can’t be back-tested until '
-                       'games are played. For analysis and fun, not betting.')
+                       '2024-26); the fresh-roster projection has not yet been evaluated. '
+                       'For analysis and fun, not betting.')
         else:
             st.caption('538-style Elo over 30,905 games, 2003-2026. For analysis, not betting.')
 

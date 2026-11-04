@@ -85,6 +85,12 @@
       "n": 33
     }
   ],
+  "underdog_tail_spread_engine": {
+    "threshold": 0.3,
+    "n": 173,
+    "mean_predicted": 0.239,
+    "observed": 0.127
+  },
   "coefficients": {
     "home_court_points": 2.47,
     "points_per_100_elo": 3.7,

@@ -54,6 +54,15 @@ def reliability(y, p, bins=10):
     return out
 
 
+def tail_check(y, p, below=0.30):
+    """Calibration on the heavy-home-underdog tail, where the engine is weakest."""
+    y, p = np.asarray(y), np.asarray(p)
+    m = p < below
+    return {'threshold': below, 'n': int(m.sum()),
+            'mean_predicted': round(float(p[m].mean()), 3),
+            'observed': round(float(y[m].mean()), 3)}
+
+
 def main():
     games = pd.read_csv(ROOT / 'data' / 'games_history.csv', parse_dates=['date'])
     g, _ = compute_elo(games)
@@ -95,6 +104,7 @@ def main():
         'holdout_seasons': HOLDOUT,
         'metrics': results,
         'reliability_spread_engine': reliability(y, p_spread),
+        'underdog_tail_spread_engine': tail_check(y, p_spread),
         'coefficients': {
             'home_court_points': eng.hca,
             'points_per_100_elo': round(eng.b_elo * 100, 2),
