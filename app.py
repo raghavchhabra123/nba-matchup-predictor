@@ -268,7 +268,7 @@ with st.sidebar:
     st.divider()
     st.markdown('**🔌 Live data**')
     st.caption(f'Source: {source}')
-    if st.button('🩹 Load injury report', use_container_width=True):
+    if st.button('🩹 Load injury report', width='stretch'):
         try:
             from src.injuries import fetch_injuries
             with st.spinner('Fetching injuries from ESPN…'):
@@ -283,7 +283,7 @@ with st.sidebar:
         st.caption(f"🩹 {injury_report['count']} players listed · "
                    f"{injury_report['fetched'][:16].replace('T', ' ')}")
     if level >= 2:
-        if st.button('🔄 Refresh team stats (nba_api)', use_container_width=True):
+        if st.button('🔄 Refresh team stats (nba_api)', width='stretch'):
             try:
                 from src.live import refresh
                 with st.spinner('Fetching from NBA.com…'):
@@ -534,7 +534,7 @@ def render_quality():
                     tooltip=['predicted', 'observed', 'n'])
                 ln = pts.mark_line(color=HOME_C, opacity=0.5)
                 st.altair_chart((diag + ln + pts).properties(height=300),
-                                use_container_width=True)
+                                width='stretch')
                 st.caption('Dots on the dashed line = the probabilities are honest.')
             except Exception:
                 st.line_chart(rel.set_index('predicted')[['observed']])
@@ -577,7 +577,7 @@ def render_ask(facts):
     pcols = st.columns(2)
     clicked = None
     for i, pl in enumerate(pills):
-        if pcols[i % 2].button(pl, key=f'pill{i}', use_container_width=True):
+        if pcols[i % 2].button(pl, key=f'pill{i}', width='stretch'):
             clicked = pl
     with st.form('askform', clear_on_submit=True):
         q = st.text_input('Your question', placeholder='Ask anything about this matchup…',
