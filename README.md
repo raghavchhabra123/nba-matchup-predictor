@@ -38,6 +38,17 @@ Rounded fitted effects include a **2.47-point home advantage**, **3.7 points per
 
 See [model building](scripts/build_ratings.py) and [evaluation](scripts/evaluate.py) for the implementation.
 
+## Live 2026–27 tracker
+
+The backtest above has now been used to compare several model variants, so it is no longer an untouched test. The live tracker provides a cleaner one: the frozen base engine makes each prediction **before tip-off**, and it is graded afterward.
+
+- `scripts/update_season.py` pulls results from ESPN's public scoreboard, rebuilds Elo by replaying every completed game in order, and logs predictions for games tipping off in the next 24 hours.
+- Predictions are append-only and never edited. A game with no prediction on record at tip-off is logged as **missed**, never predicted after the fact.
+- A prediction counts toward the live record only if GitHub's own record shows the Actions run that published it finished before tip-off. Local runs never count.
+- Roster projections, travel, and player toggles are what-if scenarios in the dashboard and are not scored.
+
+The refresh runs from the **Season update** workflow (manual trigger for now). Tests: `python -m pytest tests/`.
+
 ## Player-availability scenarios
 
 The dashboard also estimates lineup changes using BPM-based player values and redistributed minutes. This is an exploratory scenario layer, not a separately validated injury-prediction model. Its assumptions should not be confused with observed causal player effects or the holdout results above.
@@ -66,6 +77,10 @@ The repository's historical dataset contains 30,905 games spanning 2003–04 thr
 | `src/lineups.py` | Player-availability scenario logic |
 | `scripts/build_ratings.py` | Fit and export the engine |
 | `scripts/evaluate.py` | Evaluate predictions and calibration |
+| `src/season.py` | Live-season results, frozen predictions, and scorecard |
+| `scripts/update_season.py` | Refresh the live tracker |
+| `data/season/` | Live tracker data: results, predictions, missed games, run receipts |
+| `tests/` | Tests for the live tracker |
 | `models/engine.json` | Saved model parameters and ratings |
 | `models/metrics_tier1.json` | Saved metrics and reliability bins |
 | `data/games_history.csv` | Historical game data |

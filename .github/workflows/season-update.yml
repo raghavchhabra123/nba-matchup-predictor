@@ -1,0 +1,66 @@
+# Refreshes the current-season tracker (data/season/) and commits the result.
+#
+# MANUAL ONLY for now: run it from the Actions tab ("Run workflow").
+# The daily schedule below is deliberately commented out. Automated commits
+# to main change the agreed review workflow, so they stay off until Raghav
+# explicitly approves enabling them.
+#
+# Note: GitHub can delay or drop scheduled runs, so schedule timing is never
+# used as evidence that a prediction was published before tip-off. That proof
+# comes from GitHub's completion record for each run (see src/season.py).
+
+name: Season update
+
+on:
+  workflow_dispatch:
+  # schedule:
+  #   - cron: '0 15 * * *'   # ~10-11am ET: before the day's earliest tip-offs
+  #   - cron: '0 21 * * *'   # ~4-5pm ET: backup in case the morning run is late
+
+permissions:
+  contents: write   # commit data/season/
+  actions: read     # read earlier runs' completion records
+
+concurrency:
+  group: season-update      # never two writers at once
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Install
+        run: pip install -r requirements-dev.txt
+
+      - name: Tests must pass before any data is written
+        run: python -m pytest tests/ -q
+
+      - name: Refresh season data
+        id: refresh
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python -m scripts.update_season
+
+      # Commit even when the feed failed, so status.json shows the failure in
+      # the app. Pushing is the final step: a run's success means it published.
+      - name: Commit and push
+        if: always() && steps.refresh.outcome != 'skipped'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/season/
+          if git diff --cached --quiet; then
+            echo "No changes."
+            exit 0
+          fi
+          git commit -m "Season update $(date -u +%Y-%m-%dT%H:%MZ) [run ${GITHUB_RUN_ID}]"
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"

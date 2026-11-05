@@ -15,6 +15,7 @@ import streamlit as st
 
 from src.chat import ask as chat_ask
 from src.engine import SpreadEngine
+from src import season as season_tracker
 from src.injuries import by_team, load_injuries, norm_name
 from src.knowledge import load_kb
 from src.lineups import home_player_points, team_delta
@@ -630,3 +631,78 @@ else:
         ask_idx = 3
     with _tabs[ask_idx]:
         render_ask(_facts)
+
+
+# --------------------------------------------------------------- this season
+def render_season():
+    """Live tracker: tonight's frozen-model predictions and the prospective
+    scorecard. Reads data/season/*, written only by scripts/update_season.py."""
+    store = season_tracker.Store()
+    status = store.status()
+    st.divider()
+    st.subheader('📅 This season — live tracker')
+    if not status:
+        st.caption('The live tracker hasn\'t run yet. Once it does, tonight\'s games '
+                   'and a running record of pre-game predictions appear here.')
+        return
+
+    from datetime import datetime, timedelta, timezone
+    now = datetime.now(timezone.utc)
+    ok = status.get('feed_ok')
+    last_ok = status.get('last_success_utc')
+    msg = (f"Last successful refresh: **{last_ok or 'never'}** (UTC) · "
+           f"results as of {status.get('data_cutoff_utc', '—')}")
+    if ok is False:
+        st.warning(f"Latest refresh failed — showing the last good data. {msg}")
+    else:
+        st.caption(msg)
+
+    games, preds = store.games(), store.preds()
+    if len(preds):
+        p = preds.copy()
+        p['tip'] = p.tipoff_utc.map(season_tracker.parse_ts)
+        slate = p[(p.tip >= now - timedelta(hours=4)) & (p.tip <= now + timedelta(hours=30))]
+        slate = slate.sort_values('tip').drop_duplicates('event_id', keep='last')
+        if len(slate):
+            g = games.set_index('event_id')
+            rows = []
+            for r in slate.itertuples():
+                game = g.loc[r.event_id] if r.event_id in g.index else None
+                result = ''
+                if game is not None and game.status == 'final':
+                    home_won = game.home_pts > game.away_pts
+                    called = (r.p_home > 0.5) == home_won
+                    result = f"{int(game.away_pts)}–{int(game.home_pts)} {'✅' if called else '❌'}"
+                elif game is not None and game.status != 'scheduled':
+                    result = game.status.replace('_', ' ')
+                rows.append({
+                    'Tip (ET)': r.tip.astimezone(season_tracker.ET).strftime('%a %-I:%M %p'),
+                    'Game': f"{abbr2name.get(r.away, r.away)} @ {abbr2name.get(r.home, r.home)}"
+                            + (' (neutral)' if int(r.neutral) else ''),
+                    'Home win': f"{r.p_home:.0%}",
+                    'Result': result})
+            st.markdown('**Tonight\'s games** — locked in before tip-off, never edited after.')
+            st.dataframe(pd.DataFrame(rows), hide_index=True, width='stretch')
+
+    sc = season_tracker.scorecard(store)
+    st.markdown('**Live record** — only predictions provably published before tip-off count.')
+    c1, c2, c3, c4 = st.columns(4)
+    m = sc['metrics'] or {}
+    c1.metric('Graded games', sc['graded'])
+    c2.metric('Accuracy', f"{m['accuracy']:.1%}" if m else '—')
+    c3.metric('Log-loss', f"{m['log_loss']:.3f}" if m else '—',
+              help='Lower is better. Rewards honest probabilities, not just right picks.')
+    c4.metric('Missed games', sc['missed'],
+              help='Games that tipped off with no prediction on record (e.g. a refresh '
+                   'ran late). They are never predicted after the fact.')
+    st.caption(
+        f"{sc['predictions']} predictions logged · {sc['eligible']} verified as published "
+        f"before tip-off · {sc['unverified']} not (yet) verified · "
+        f"{sc['void_rescheduled']} voided by rescheduling · {sc['awaiting_result']} awaiting "
+        f"results. Early-season samples are small — expect the numbers to swing.")
+    st.caption('The live record scores the frozen base engine (Elo + home court + rest). '
+               'The matchup tool above is a what-if scenario that also uses projected '
+               '2026-27 rosters, travel and player toggles; it is not what gets scored.')
+
+
+render_season()
