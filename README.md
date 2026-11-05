@@ -32,7 +32,7 @@ These are **saved experiment results**, not a guarantee of future performance. T
 3. Convert the expected margin into a probability using a normal cumulative distribution function.
 4. Evaluate accuracy, log loss, Brier score, and reliability bins on later seasons.
 
-The build script uses seasons through 2023 for model fitting; its home-court/rest refit uses 2016–2023. Sequential Elo updates use completed games, while the dashboard's final ratings incorporate the available history.
+The build script fits one margin model on seasons 2003–04 through 2023–24. (A 2016+ refit of home court and rest was tested and did not materially improve holdout log-loss, so it is not used.) Sequential Elo updates use completed games, while the dashboard's final ratings incorporate the available history.
 
 Rounded fitted effects include a **2.47-point home advantage**, **3.7 points per 100 Elo**, a **−1.78-point home back-to-back effect**, and a **+2.07-point away back-to-back effect** on home margin. The residual scale is approximately **12.51 points**.
 
