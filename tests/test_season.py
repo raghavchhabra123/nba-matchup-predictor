@@ -83,9 +83,10 @@ def env(tmp_path):
             'engine': S.load_engine(), 'feed': Feed(base_feed())}
 
 
-def run(env, now=NOW, run_id='local'):
+def run(env, now=NOW, run_id='local', run_attempt='1'):
     return S.run_update(now=now, history=env['history'], fetch=env['feed'],
-                        store=env['store'], engine=env['engine'], run_id=run_id)
+                        store=env['store'], engine=env['engine'], run_id=run_id,
+                        run_attempt=run_attempt)
 
 
 def snapshot(store):
@@ -152,7 +153,7 @@ def test_postponed_then_rescheduled_voids_old_prediction(env):
     env['feed'].set(3, status='STATUS_FINAL', home_score='105', away_score='100')
     run(env, now=datetime(2026, 11, 8, 12, 0, tzinfo=UTC), run_id='504')
     # Treat the runs as verified so grading logic is exercised.
-    _receipt_all(env['store'], completed='2026-11-01T00:00:00Z')
+    _receipt_all(env['store'])
     sc = S.scorecard(env['store'])
     assert sc['void_rescheduled'] == 1                       # old tip-off, voided
     assert sc['graded'] >= 1                                 # new tip-off, graded
@@ -237,11 +238,15 @@ def test_espn_abbreviations_are_mapped(env):
 
 
 # ------------------------------------------------------------------ eligibility
-def _receipt_all(store, completed, conclusion='success'):
+def _receipt_all(store, completed=None, conclusion='success', lag=timedelta(minutes=2)):
+    """Write a receipt for every (run_id, run_attempt) in the ledger. With no
+    `completed`, each attempt finishes `lag` after its own predictions."""
     preds = store.preds()
-    rows = [{'run_id': r, 'conclusion': conclusion, 'completed_at_utc': completed,
-             'head_sha': 'x', 'checked_at_utc': completed}
-            for r in sorted(set(preds.run_id.astype(str)))]
+    rows = []
+    for (r, a), grp in preds.groupby([preds.run_id.astype(str), preds.run_attempt.astype(str)]):
+        done = completed or S.iso(max(S.parse_ts(t) for t in grp.predicted_at_utc) + lag)
+        rows.append({'run_id': r, 'run_attempt': a, 'conclusion': conclusion,
+                     'completed_at_utc': done, 'head_sha': 'x', 'checked_at_utc': done})
     pd.DataFrame(rows, columns=S.RECEIPT_COLS).to_csv(store.receipts_path, index=False)
 
 
@@ -268,13 +273,14 @@ def test_receipts_come_from_github_record(env):
     run(env, run_id='222')
     calls = []
 
-    def get_run(rid):
-        calls.append(rid)
-        return {'status': 'completed', 'conclusion': 'success',
-                'updated_at': '2026-11-04T18:03:00Z', 'head_sha': 'abc'}
-    n = S.update_receipts(env['store'], get_run, NOW)
-    assert n == 1 and calls == ['222']
-    assert S.update_receipts(env['store'], get_run, NOW) == 0   # not re-fetched
+    def get_attempt(rid, att):
+        calls.append((rid, att))
+        return {'id': int(rid), 'run_attempt': int(att), 'status': 'completed',
+                'conclusion': 'success', 'updated_at': '2026-11-04T18:03:00Z',
+                'head_sha': 'abc'}
+    n = S.update_receipts(env['store'], get_attempt, NOW)
+    assert n == 1 and calls == [('222', '1')]
+    assert S.update_receipts(env['store'], get_attempt, NOW) == 0   # not re-fetched
 
 
 def test_scorecard_grades_finished_games(env):
@@ -286,3 +292,110 @@ def test_scorecard_grades_finished_games(env):
     sc = S.scorecard(env['store'])
     assert sc['graded'] == 2 and sc['metrics']['log_loss'] > 0
     assert sc['missed'] == 0
+
+
+# ------------------------------------------------------------------ review regressions
+def test_small_tipoff_change_keeps_original_prediction(env):
+    """[P1] A 30-minute tip-off change is the same game: no second prediction,
+    and the event is graded once."""
+    run(env, run_id='601')
+    p3 = env['store'].preds().query("event_id == '3'").iloc[0]
+    env['feed'].set(3, date='2026-11-05T01:00Z')             # 7:30pm -> 8:00pm ET
+    st = run(env, now=NOW + timedelta(hours=2), run_id='602')
+    rows = env['store'].preds().query("event_id == '3'")
+    assert len(rows) == 1 and st['new_predictions'] == 0
+    assert rows.iloc[0].p_home == p3.p_home
+    env['feed'].set(3, status='STATUS_FINAL', home_score='110', away_score='100')
+    run(env, now=datetime(2026, 11, 5, 12, 0, tzinfo=UTC), run_id='603')
+    _receipt_all(env['store'])
+    sc = S.scorecard(env['store'])
+    assert sc['void_rescheduled'] == 0
+    assert sc['graded'] == 1                                 # event 3 counted once
+
+
+def test_genuine_reschedule_supersedes_and_scores_once(env):
+    """[P1] Beyond tolerance a new prediction is made, explicitly superseding the
+    old one; at most one prediction per event is ever scored."""
+    run(env, run_id='611')
+    old_id = env['store'].preds().query("event_id == '3'").iloc[0].prediction_id
+    env['feed'].set(3, date='2026-11-06T00:30Z')             # moved a full day
+    run(env, now=datetime(2026, 11, 5, 18, 0, tzinfo=UTC), run_id='612')
+    rows = env['store'].preds().query("event_id == '3'").sort_values('predicted_at_utc')
+    assert len(rows) == 2 and rows.iloc[1].supersedes == old_id
+    assert rows.iloc[0].supersedes == ''
+    env['feed'].set(3, status='STATUS_FINAL', home_score='100', away_score='90')
+    run(env, now=datetime(2026, 11, 6, 12, 0, tzinfo=UTC), run_id='613')
+    _receipt_all(env['store'])
+    sc = S.scorecard(env['store'])
+    assert sc['void_rescheduled'] == 1 and sc['graded'] == 1
+
+
+def test_receipts_are_per_attempt(env):
+    """[P2->P1] A re-run reuses the run ID. Attempt 1's prediction must be judged
+    by attempt 1's completion, and a later attempt cannot vouch for it."""
+    run(env, run_id='700', run_attempt='1')
+    store = env['store']
+    seen = []
+
+    def get_attempt(rid, att):
+        seen.append((rid, att))
+        # attempt 1 failed; a hypothetical attempt 2 succeeded early
+        ok = att == '2'
+        return {'id': int(rid), 'run_attempt': int(att), 'status': 'completed',
+                'conclusion': 'success' if ok else 'failure',
+                'updated_at': '2026-11-04T18:04:00Z', 'head_sha': 'abc'}
+    S.update_receipts(store, get_attempt, NOW)
+    assert seen == [('700', '1')]                            # asked for the exact attempt
+    assert S.scorecard(store)['eligible'] == 0               # attempt 1 failed
+
+    # A mismatched attempt record is never accepted.
+    run(env, now=NOW + timedelta(minutes=30), run_id='701', run_attempt='3')
+    env['feed'].events.append(ev(11, '2026-11-05T01:30Z', 'NY', 'LAL'))
+    run(env, now=NOW + timedelta(minutes=40), run_id='701', run_attempt='3')
+    wrong = lambda rid, att: {'id': int(rid), 'run_attempt': 1, 'status': 'completed',
+                              'conclusion': 'success', 'updated_at': '2026-11-04T19:00:00Z',
+                              'head_sha': 'abc'}
+    S.update_receipts(store, wrong, NOW)
+    assert ('701', '3') not in set(zip(store.receipts().run_id.astype(str),
+                                       store.receipts().run_attempt.astype(str)))
+
+
+def test_completion_before_prediction_is_not_eligible(env):
+    """predicted_at <= completion <= tipoff - buffer, both bounds enforced."""
+    run(env, run_id='710')
+    _receipt_all(env['store'], completed='2026-11-04T17:59:00Z')  # before predicted_at
+    assert S.scorecard(env['store'])['eligible'] == 0
+    _receipt_all(env['store'], completed='2026-11-04T18:00:00Z')  # equal is fine
+    assert S.scorecard(env['store'])['eligible'] == 2
+
+
+def test_missed_game_logged_once_across_runs(env):
+    """[P2] Repeated runs inside the buffer, and after tip-off, add one missed row."""
+    run(env)
+    env['feed'].events.append(ev(12, '2026-11-05T03:05Z', 'PHI', 'LAL'))
+    run(env, now=datetime(2026, 11, 5, 2, 58, tzinfo=UTC))       # inside buffer
+    run(env, now=datetime(2026, 11, 5, 3, 0, tzinfo=UTC))        # inside buffer again
+    env['feed'].set(12, status='STATUS_IN_PROGRESS')
+    run(env, now=datetime(2026, 11, 5, 3, 30, tzinfo=UTC))       # now underway
+    env['feed'].set(12, status='STATUS_FINAL', home_score='100', away_score='99')
+    run(env, now=datetime(2026, 11, 5, 6, 0, tzinfo=UTC))
+    m = env['store'].missed()
+    assert (m.event_id == '12').sum() == 1
+    assert S.scorecard(env['store'])['missed'] == 1
+
+
+def test_back_to_back_counts_game_in_progress(env):
+    """[P2] A team playing right now is on a back-to-back tomorrow, even though
+    the unfinished game must not touch Elo."""
+    run(env)
+    env['feed'].set(4, status='STATUS_IN_PROGRESS')          # DEN v LAL underway
+    env['feed'].events.append(ev(13, '2026-11-06T00:00Z', 'LAL', 'NY'))  # LAL next night
+    now = datetime(2026, 11, 5, 2, 30, tzinfo=UTC)
+    run(env, now=now)
+    p = env['store'].preds().set_index('event_id')
+    assert int(p.loc['13', 'home_b2b']) == 1 and int(p.loc['13', 'away_b2b']) == 0
+    g = env['store'].games()
+    R_with = S.ratings_as_of(S.history_with_season(env['history'], g), 2026)
+    R_finals = S.ratings_as_of(S.history_with_season(
+        env['history'], g[g.status == 'final']), 2026)
+    assert R_with == R_finals                                # in-progress game ignored by Elo

@@ -14,8 +14,14 @@ name: Season update
 on:
   workflow_dispatch:
   # schedule:
-  #   - cron: '0 15 * * *'   # ~10-11am ET: before the day's earliest tip-offs
-  #   - cron: '0 21 * * *'   # ~4-5pm ET: backup in case the morning run is late
+  #   - cron: '17 15 * * *'  # ~10-11am ET: main run, before the earliest tip-offs
+  #   - cron: '17 21 * * *'  # ~4-5pm ET: GAP-FILL ONLY
+  #
+  # The second run never refreshes or replaces a prediction already on record.
+  # It only predicts games that have no prediction yet (e.g. the morning run
+  # was late or dropped, or a game was genuinely rescheduled). Every run follows
+  # the same rule, so this holds by construction in src/season.py.
+  # Off-the-hour minutes avoid GitHub's top-of-hour scheduling congestion.
 
 permissions:
   contents: write   # commit data/season/

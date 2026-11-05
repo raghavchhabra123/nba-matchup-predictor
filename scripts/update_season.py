@@ -35,8 +35,10 @@ def code_version() -> str:
         return 'unknown'
 
 
-def github_run_getter():
-    """Return get_run(run_id) for this repository, or None outside Actions."""
+def github_attempt_getter():
+    """Return get_attempt(run_id, attempt) for this repository, or None outside
+    Actions. Uses /actions/runs/{id}/attempts/{n}: re-runs share a run ID, so
+    the attempt record is what proves *that* publication's timing."""
     repo, token = os.environ.get('GITHUB_REPOSITORY'), os.environ.get('GITHUB_TOKEN')
     if not repo:
         return None
@@ -45,28 +47,29 @@ def github_run_getter():
     if token:
         headers['Authorization'] = f'Bearer {token}'
 
-    def get_run(run_id):
-        r = requests.get(f'https://api.github.com/repos/{repo}/actions/runs/{run_id}',
-                         headers=headers, timeout=20)
+    def get_attempt(run_id, attempt):
+        r = requests.get(f'https://api.github.com/repos/{repo}/actions/runs/{run_id}'
+                         f'/attempts/{attempt}', headers=headers, timeout=20)
         r.raise_for_status()
         return r.json()
-    return get_run
+    return get_attempt
 
 
 def main() -> int:
     now = datetime.now(timezone.utc)
     store = S.Store()
     run_id = os.environ.get('GITHUB_RUN_ID', 'local')
+    run_attempt = os.environ.get('GITHUB_RUN_ATTEMPT', '1')
     history = pd.read_csv(ROOT / 'data' / 'games_history.csv', parse_dates=['date'])
 
-    get_run = github_run_getter()
-    if get_run:
-        n = S.update_receipts(store, get_run, now)
-        print(f'receipts: {n} earlier run(s) verified')
+    get_attempt = github_attempt_getter()
+    if get_attempt:
+        n = S.update_receipts(store, get_attempt, now)
+        print(f'receipts: {n} earlier run attempt(s) verified')
 
     status = S.run_update(now=now, history=history, fetch=S.fetch_events, store=store,
                           engine=S.load_engine(), code_version=code_version(),
-                          run_id=run_id)
+                          run_id=run_id, run_attempt=run_attempt)
     print(json.dumps(status, indent=2, sort_keys=True))
     sc = S.scorecard(store)
     print(f"scorecard: {sc['graded']} graded, {sc['eligible']} eligible, "

@@ -698,7 +698,8 @@ def render_season():
     st.caption(
         f"{sc['predictions']} predictions logged · {sc['eligible']} verified as published "
         f"before tip-off · {sc['unverified']} not (yet) verified · "
-        f"{sc['void_rescheduled']} voided by rescheduling · {sc['awaiting_result']} awaiting "
+        f"{sc['void_rescheduled']} voided by rescheduling · {sc['superseded']} superseded "
+        f"(one prediction per game is scored) · {sc['awaiting_result']} awaiting "
         f"results. Early-season samples are small — expect the numbers to swing.")
     st.caption('The live record scores the frozen base engine (Elo + home court + rest). '
                'The matchup tool above is a what-if scenario that also uses projected '

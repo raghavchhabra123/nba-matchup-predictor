@@ -60,12 +60,14 @@ RECHECK_DAYS = 7                         # re-read recent days for corrections
 
 GAME_COLS = ['event_id', 'season', 'tipoff_utc', 'status', 'home', 'away',
              'home_pts', 'away_pts', 'neutral']
-PRED_COLS = ['event_id', 'home', 'away', 'neutral', 'tipoff_utc', 'predicted_at_utc',
-             'data_cutoff_utc', 'p_home', 'margin', 'elo_home', 'elo_away',
-             'home_b2b', 'away_b2b', 'model_version', 'code_version', 'run_id']
+PRED_COLS = ['prediction_id', 'event_id', 'home', 'away', 'neutral', 'tipoff_utc',
+             'predicted_at_utc', 'data_cutoff_utc', 'p_home', 'margin', 'elo_home',
+             'elo_away', 'home_b2b', 'away_b2b', 'model_version', 'code_version',
+             'run_id', 'run_attempt', 'supersedes']
 MISSED_COLS = ['event_id', 'home', 'away', 'tipoff_utc', 'noticed_at_utc', 'run_id',
-               'reason']
-RECEIPT_COLS = ['run_id', 'conclusion', 'completed_at_utc', 'head_sha', 'checked_at_utc']
+               'run_attempt', 'reason']
+RECEIPT_COLS = ['run_id', 'run_attempt', 'conclusion', 'completed_at_utc', 'head_sha',
+                'checked_at_utc']
 
 
 class FeedError(RuntimeError):
@@ -171,7 +173,10 @@ def normalize(raw_events: list[dict]) -> pd.DataFrame:
 # --------------------------------------------------------------------------- store
 def _read(path: Path, cols) -> pd.DataFrame:
     if path.exists():
-        df = pd.read_csv(path, dtype={'event_id': str, 'run_id': str})
+        df = pd.read_csv(path, dtype={'event_id': str, 'run_id': str, 'run_attempt': str,
+                                      'prediction_id': str, 'supersedes': str},
+                         keep_default_na=False, na_values={'home_pts': [''],
+                                                           'away_pts': ['']})
         return df[cols] if set(cols) <= set(df.columns) else df
     return pd.DataFrame(columns=cols)
 
@@ -213,6 +218,21 @@ class Store:
 
     def status(self) -> dict:
         return json.loads(self.status_path.read_text()) if self.status_path.exists() else {}
+
+
+def _near(a: str, b: str) -> bool:
+    """Same scheduled game: tip-offs within RESCHEDULE_TOLERANCE."""
+    return abs(parse_ts(a) - parse_ts(b)) <= RESCHEDULE_TOLERANCE
+
+
+def covering(rows: pd.DataFrame, event_id: str, tipoff_utc: str) -> pd.DataFrame:
+    """Stored rows (predictions or missed) for this event whose tip-off is within
+    tolerance of the given one. A small time change keeps the original row; only
+    a genuine reschedule (> tolerance) leaves the event uncovered."""
+    if not len(rows):
+        return rows
+    r = rows[rows.event_id.astype(str) == str(event_id)]
+    return r.loc[_mask(_near(t, tipoff_utc) for t in r.tipoff_utc)]
 
 
 def merge_games(old: pd.DataFrame, new: pd.DataFrame) -> pd.DataFrame:
@@ -264,12 +284,20 @@ def ratings_as_of(all_games: pd.DataFrame, season: int) -> dict:
     return R
 
 
-def rest_flags(all_games: pd.DataFrame, pending: pd.DataFrame) -> pd.DataFrame:
-    """Back-to-back flags for pending games, using the latest prior game date
-    (completed or also pending) for each team."""
+def rest_flags(all_games: pd.DataFrame, pending: pd.DataFrame,
+               schedule: pd.DataFrame | None = None) -> pd.DataFrame:
+    """Back-to-back flags for pending games from the latest prior game date per
+    team. Dates come from history, the current schedule (final, in-progress and
+    scheduled games — a game underway still means the team played that day) and
+    the pending games. Only finals ever feed Elo; this is rest only."""
     pend = pending.copy()
     pend['date'] = [et_date(t) for t in pend.tipoff_utc]
-    seen = pd.concat([all_games[['date', 'home', 'away']], pend[['date', 'home', 'away']]])
+    parts = [all_games[['date', 'home', 'away']], pend[['date', 'home', 'away']]]
+    if schedule is not None and len(schedule):
+        sch = schedule[schedule.status.isin(['final', 'in_progress', 'scheduled'])]
+        parts.append(pd.DataFrame({'date': [et_date(t) for t in sch.tipoff_utc],
+                                   'home': sch.home.values, 'away': sch.away.values}))
+    seen = pd.concat(parts)
     long = pd.concat([seen[['date', 'home']].rename(columns={'home': 't'}),
                       seen[['date', 'away']].rename(columns={'away': 't'})])
     long['date'] = pd.to_datetime(long['date'])
@@ -301,7 +329,8 @@ def predict_rows(pending: pd.DataFrame, R: dict, engine: dict) -> pd.DataFrame:
 
 # --------------------------------------------------------------------------- run
 def run_update(*, now: datetime, history: pd.DataFrame, fetch, store: Store,
-               engine: dict, code_version: str = 'local', run_id: str = 'local') -> dict:
+               engine: dict, code_version: str = 'local', run_id: str = 'local',
+               run_attempt: str = '1') -> dict:
     """One refresh. `fetch(dates) -> raw events` may raise FeedError; on failure
     no data file is written and the last valid state is kept."""
     now = now.astimezone(timezone.utc)
@@ -326,7 +355,8 @@ def run_update(*, now: datetime, history: pd.DataFrame, fetch, store: Store,
     dates = sorted(days)
 
     status = store.status()
-    status.update({'last_attempt_utc': iso(now), 'run_id': run_id})
+    status.update({'last_attempt_utc': iso(now), 'run_id': run_id,
+                   'run_attempt': run_attempt})
     try:
         fresh = normalize(fetch(dates))
     except FeedError as exc:
@@ -342,40 +372,55 @@ def run_update(*, now: datetime, history: pd.DataFrame, fetch, store: Store,
     tracking_start = parse_ts(status.get('tracking_start_utc') or iso(now))
 
     preds, missed = store.preds(), store.missed()
-    predicted_keys = set(zip(preds.event_id.astype(str), preds.tipoff_utc))
-    missed_keys = set(zip(missed.event_id.astype(str), missed.tipoff_utc))
+
+    def predicted(e, t):
+        return len(covering(preds, e, t)) > 0
+
+    def already_missed(e, t):
+        return len(covering(missed, e, t)) > 0
 
     upcoming = games[games.status == 'scheduled'].copy()
     upcoming['tip'] = upcoming.tipoff_utc.map(parse_ts)
     in_window = upcoming[upcoming.tip <= now + PREDICT_HORIZON]
-    new_keys = [k for k in zip(in_window.event_id, in_window.tipoff_utc)
-                if k not in predicted_keys]
-    todo = in_window.loc[_mask(k in set(new_keys)
-                               for k in zip(in_window.event_id, in_window.tipoff_utc))]
+    todo = in_window.loc[_mask(not predicted(e, t)
+                               for e, t in zip(in_window.event_id, in_window.tipoff_utc))]
     on_time = todo[todo.tip > now + TIPOFF_BUFFER]
     too_late = todo[todo.tip <= now + TIPOFF_BUFFER]
+    too_late = too_late.loc[_mask(not already_missed(e, t)
+                                  for e, t in zip(too_late.event_id, too_late.tipoff_utc))]
 
-    # Games that started (or finished) with no prediction on record and no
+    # Games that started (or finished) with no covering prediction and no
     # missed entry yet: record as missed, never predict after the fact.
     started = games[games.status.isin(['final', 'in_progress'])].copy()
     started = started.loc[_mask(parse_ts(t) <= now for t in started.tipoff_utc)]
-    started = started.loc[_mask((e, t) not in predicted_keys and (e, t) not in missed_keys
+    started = started.loc[_mask(not predicted(e, t) and not already_missed(e, t)
                                 and parse_ts(t) >= tracking_start
                                 for e, t in zip(started.event_id, started.tipoff_utc))]
     missed_new = pd.concat([too_late[MISSED_COLS[:4]], started[MISSED_COLS[:4]]])
-    missed_new = missed_new.drop_duplicates(['event_id', 'tipoff_utc'])
+    missed_new = missed_new.drop_duplicates('event_id')
     missed_new = missed_new.assign(noticed_at_utc=iso(now), run_id=run_id,
+                                   run_attempt=run_attempt,
                                    reason='no prediction published before tip-off')
 
     new_preds = pd.DataFrame(columns=PRED_COLS)
     if len(on_time):
         season = int(on_time.season.max())
         R = ratings_as_of(all_games, season)
-        flagged = rest_flags(all_games, on_time)
-        new_preds = predict_rows(flagged, R, engine).assign(
+        flagged = rest_flags(all_games, on_time, schedule=games)
+        made = predict_rows(flagged, R, engine)
+
+        def prior(e):
+            # A genuine reschedule: the event has earlier predictions, none
+            # covering the new tip-off. Record which one this supersedes.
+            r = preds[preds.event_id.astype(str) == str(e)] if len(preds) else preds
+            return '' if not len(r) else str(r.sort_values('predicted_at_utc')
+                                              .prediction_id.iloc[-1])
+        new_preds = made.assign(
+            prediction_id=[f'{e}@{iso(now)}' for e in made.event_id],
             predicted_at_utc=iso(now), data_cutoff_utc=iso(now),
             model_version=model_version(engine), code_version=code_version,
-            run_id=run_id)[PRED_COLS]
+            run_id=run_id, run_attempt=run_attempt,
+            supersedes=[prior(e) for e in made.event_id])[PRED_COLS]
 
     # Write (append-only for predictions and missed).
     _write(games[GAME_COLS], store.games_path, ['tipoff_utc', 'event_id'])
@@ -399,52 +444,63 @@ def run_update(*, now: datetime, history: pd.DataFrame, fetch, store: Store,
     return status
 
 
-def update_receipts(store: Store, get_run, now: datetime) -> int:
-    """Record GitHub's own completion record for each Actions run that produced
-    predictions. `get_run(run_id)` returns the /actions/runs/{id} JSON. A run
-    cannot vouch for itself (it is still running), so receipts lag one run."""
+def update_receipts(store: Store, get_attempt, now: datetime) -> int:
+    """Record GitHub's own completion record for each Actions run *attempt* that
+    produced predictions. GitHub reuses a run ID across re-runs, so receipts
+    are keyed by (run_id, run_attempt) and `get_attempt(run_id, attempt)` must
+    return /actions/runs/{id}/attempts/{n}. A run cannot vouch for itself (it is
+    still running), so receipts lag one run."""
     preds, rec = store.preds(), store.receipts()
-    have = set(rec.run_id.astype(str))
-    want = sorted({str(r) for r in preds.run_id.astype(str) if r != 'local'} - have)
+    have = set(zip(rec.run_id.astype(str), rec.run_attempt.astype(str)))
+    want = sorted({(str(r), str(a)) for r, a in zip(preds.run_id, preds.run_attempt)
+                   if str(r) != 'local'} - have)
     rows = []
-    for rid in want:
+    for rid, att in want:
         try:
-            run = get_run(rid)
+            run = get_attempt(rid, att)
         except Exception:
             continue                              # try again next time
         if run.get('status') != 'completed':
             continue
-        rows.append({'run_id': rid, 'conclusion': run.get('conclusion'),
+        if str(run.get('id')) != rid or str(run.get('run_attempt')) != att:
+            continue                              # never accept a mismatched record
+        rows.append({'run_id': rid, 'run_attempt': att, 'conclusion': run.get('conclusion'),
                      'completed_at_utc': run.get('updated_at'),
                      'head_sha': run.get('head_sha'), 'checked_at_utc': iso(now)})
     if rows:
         _write(_cat(rec, pd.DataFrame(rows), RECEIPT_COLS),
-               store.receipts_path, ['run_id'])
+               store.receipts_path, ['run_id', 'run_attempt'])
     return len(rows)
 
 
 # --------------------------------------------------------------------------- grade
 def eligibility(preds: pd.DataFrame, receipts: pd.DataFrame) -> pd.Series:
-    """A prediction is prospectively eligible only if the GitHub Actions run that
-    produced it finished successfully (per GitHub's own record) before tip-off,
-    at least TIPOFF_BUFFER early. Local runs are never eligible."""
-    rec = receipts.set_index(receipts.run_id.astype(str)) if len(receipts) else None
+    """A prediction is prospectively eligible only if GitHub's record for the exact
+    run attempt that produced it shows success, completed after the prediction
+    was made, and completed at least TIPOFF_BUFFER before tip-off:
+
+        predicted_at <= publication completion <= tipoff - buffer
+
+    Local runs are never eligible."""
+    rec = {(str(r.run_id), str(r.run_attempt)): r for r in receipts.itertuples()} \
+        if len(receipts) else {}
 
     def ok(row):
-        if rec is None or str(row.run_id) == 'local' or str(row.run_id) not in rec.index:
+        r = rec.get((str(row.run_id), str(row.run_attempt)))
+        if r is None or str(row.run_id) == 'local' or r.conclusion != 'success':
             return False
-        r = rec.loc[str(row.run_id)]
-        if r.conclusion != 'success':
-            return False
-        return parse_ts(r.completed_at_utc) <= parse_ts(row.tipoff_utc) - TIPOFF_BUFFER
+        done = parse_ts(r.completed_at_utc)
+        return (parse_ts(row.predicted_at_utc) <= done
+                <= parse_ts(row.tipoff_utc) - TIPOFF_BUFFER)
     return preds.apply(ok, axis=1) if len(preds) else pd.Series(dtype=bool)
 
 
 def scorecard(store: Store) -> dict:
     games, preds, missed, receipts = store.games(), store.preds(), store.missed(), store.receipts()
-    out = {'predictions': int(len(preds)), 'missed': int(len(missed)),
+    out = {'predictions': int(len(preds)),
+           'missed': int(missed.event_id.nunique()) if len(missed) else 0,
            'eligible': 0, 'graded': 0, 'awaiting_result': 0, 'void_rescheduled': 0,
-           'unverified': 0, 'metrics': None, 'reliability': []}
+           'superseded': 0, 'unverified': 0, 'metrics': None, 'reliability': []}
     if not len(preds):
         return out
     p = preds.copy()
@@ -453,18 +509,24 @@ def scorecard(store: Store) -> dict:
     out['unverified'] = int((~p.eligible).sum())
     g = games.set_index('event_id')
     graded = []
-    for row in p[p.eligible].itertuples():
-        if row.event_id not in g.index:
-            out['awaiting_result'] += 1
+    # At most one scored prediction per event: the latest eligible prediction
+    # whose tip-off matches the game as played. Earlier ones are superseded;
+    # ones for a tip-off the game moved away from are void.
+    for eid, rows in p[p.eligible].groupby('event_id'):
+        if eid not in g.index:
+            out['awaiting_result'] += len(rows)
             continue
-        game = g.loc[row.event_id]
-        if abs(parse_ts(game.tipoff_utc) - parse_ts(row.tipoff_utc)) > RESCHEDULE_TOLERANCE:
-            out['void_rescheduled'] += 1
+        game = g.loc[eid]
+        match = rows.loc[_mask(_near(t, game.tipoff_utc) for t in rows.tipoff_utc)]
+        out['void_rescheduled'] += len(rows) - len(match)
+        if not len(match):
             continue
+        out['superseded'] += len(match) - 1
+        best = match.sort_values('predicted_at_utc').iloc[-1]
         if game.status != 'final':
             out['awaiting_result'] += 1
             continue
-        graded.append((float(row.p_home), int(game.home_pts > game.away_pts)))
+        graded.append((float(best.p_home), int(game.home_pts > game.away_pts)))
     if graded:
         pp = np.clip(np.array([x for x, _ in graded]), 1e-6, 1 - 1e-6)
         y = np.array([v for _, v in graded])
