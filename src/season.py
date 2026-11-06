@@ -474,14 +474,21 @@ def update_receipts(store: Store, get_attempt, now: datetime) -> int:
 
 
 # --------------------------------------------------------------------------- grade
-def eligibility(preds: pd.DataFrame, receipts: pd.DataFrame) -> pd.Series:
+def eligibility(preds: pd.DataFrame, receipts: pd.DataFrame,
+                games: pd.DataFrame | None = None) -> pd.Series:
     """A prediction is prospectively eligible only if GitHub's record for the exact
     run attempt that produced it shows success, completed after the prediction
     was made, and completed at least TIPOFF_BUFFER before tip-off:
 
         predicted_at <= publication completion <= tipoff - buffer
 
+    where tipoff is the EARLIER of the prediction's original tip-off and the
+    game's current tip-off (if `games` is given). A game moved earlier must
+    still have been published before it actually started.
+
     Local runs are never eligible."""
+    current = dict(zip(games.event_id.astype(str), games.tipoff_utc)) \
+        if games is not None and len(games) else {}
     rec = {(str(r.run_id), str(r.run_attempt)): r for r in receipts.itertuples()} \
         if len(receipts) else {}
 
@@ -490,8 +497,11 @@ def eligibility(preds: pd.DataFrame, receipts: pd.DataFrame) -> pd.Series:
         if r is None or str(row.run_id) == 'local' or r.conclusion != 'success':
             return False
         done = parse_ts(r.completed_at_utc)
-        return (parse_ts(row.predicted_at_utc) <= done
-                <= parse_ts(row.tipoff_utc) - TIPOFF_BUFFER)
+        tip = parse_ts(row.tipoff_utc)
+        cur = current.get(str(row.event_id))
+        if cur is not None:
+            tip = min(tip, parse_ts(cur))
+        return parse_ts(row.predicted_at_utc) <= done <= tip - TIPOFF_BUFFER
     return preds.apply(ok, axis=1) if len(preds) else pd.Series(dtype=bool)
 
 
@@ -504,7 +514,7 @@ def scorecard(store: Store) -> dict:
     if not len(preds):
         return out
     p = preds.copy()
-    p['eligible'] = eligibility(p, receipts).values
+    p['eligible'] = eligibility(p, receipts, games).values
     out['eligible'] = int(p.eligible.sum())
     out['unverified'] = int((~p.eligible).sum())
     g = games.set_index('event_id')

@@ -399,3 +399,28 @@ def test_back_to_back_counts_game_in_progress(env):
     R_finals = S.ratings_as_of(S.history_with_season(
         env['history'], g[g.status == 'final']), 2026)
     assert R_with == R_finals                                # in-progress game ignored by Elo
+
+
+def test_earlier_tipoff_requires_publication_before_new_tipoff(env):
+    """[P1] Tip-off moves 30 min EARLIER (within tolerance, so the original
+    prediction is kept). Publication that finished before the original tip-off
+    but after the revised one must not count."""
+    run(env, run_id='800')                                   # predicts event 3 @ 00:30
+    env['feed'].set(3, date='2026-11-05T00:00Z')             # moved to 00:00
+    run(env, now=datetime(2026, 11, 4, 20, 0, tzinfo=UTC), run_id='801')
+    assert (env['store'].preds().event_id == '3').sum() == 1  # original preserved
+    env['feed'].set(3, status='STATUS_FINAL', home_score='110', away_score='100')
+    run(env, now=datetime(2026, 11, 5, 12, 0, tzinfo=UTC), run_id='802')
+
+    _receipt_all(env['store'], completed='2026-11-05T00:10:00Z')  # after 00:00 tip
+    sc = S.scorecard(env['store'])
+    p3 = S.eligibility(env['store'].preds(), env['store'].receipts(),
+                       env['store'].games())[env['store'].preds().event_id == '3']
+    assert not p3.any()
+    assert sc['graded'] == 0                                 # event 3 not counted
+    assert sc['eligible'] == 1                               # only event 4 (02:00, not final)
+    assert sc['eligible'] + sc['unverified'] == sc['predictions']
+
+    _receipt_all(env['store'], completed='2026-11-04T23:45:00Z')  # 15 min before new tip
+    sc = S.scorecard(env['store'])
+    assert sc['graded'] == 1 and sc['eligible'] == 2         # event 3 now counts
