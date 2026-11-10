@@ -1,0 +1,15 @@
+{
+  "data_cutoff_utc": "2026-11-10T04:21:57Z",
+  "feed_ok": true,
+  "games_final": 153,
+  "last_attempt_utc": "2026-11-10T04:21:57Z",
+  "last_error": null,
+  "last_success_utc": "2026-11-10T04:21:57Z",
+  "model_version": "da8f1e3133e2",
+  "new_missed": 0,
+  "new_predictions": 6,
+  "run_attempt": "1",
+  "run_id": "42755307589",
+  "season": 2026,
+  "tracking_start_utc": "2026-11-10T04:21:57Z"
+}
